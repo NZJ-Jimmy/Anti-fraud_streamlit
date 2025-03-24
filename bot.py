@@ -2,30 +2,22 @@ import streamlit as st
 from utils import write_message
 
 # Page Config
-st.set_page_config("Ebert", page_icon=":movie_camera:")
+# st.set_page_config("Arcaea QA Bot", page_icon="😋")
 
 # Set up Session State
 if "messages" not in st.session_state:
     st.session_state.messages = [
-        {"role": "assistant", "content": "Hi, I'm the GraphAcademy Chatbot!  How can I help you?"},
+        {"role": "assistant", "content": "你好，我是 《韵律源点 (Arcaea)》 问答助手。有什么可以帮助到你？🥰"},
     ]
 
 # Submit handler
 def handle_submit(message):
-    """
-    Submit handler:
-
-    You will modify this method to talk with an LLM and provide
-    context using data from Neo4j.
-    """
-
+    from agent import generate_response
     # Handle the response
     with st.spinner('Thinking...'):
-        # # TODO: Replace this with a call to your LLM
-        from time import sleep
-        sleep(1)
-        write_message('assistant', message)
-
+        # Call the agent
+        response = generate_response(message)
+        write_message('assistant', response)
 
 # Display messages in Session State
 for message in st.session_state.messages:
