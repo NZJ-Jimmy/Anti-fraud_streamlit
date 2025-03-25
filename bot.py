@@ -4,6 +4,11 @@ from utils import write_message
 # Page Config
 # st.set_page_config("Arcaea QA Bot", page_icon="😋")
 
+if not st.session_state.logged_in:
+    # 不允许用户使用
+    st.error("请先登录")
+    st.stop()
+
 # Set up Session State
 if "messages" not in st.session_state:
     st.session_state.messages = [

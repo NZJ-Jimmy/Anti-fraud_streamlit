@@ -13,6 +13,7 @@ st.logo("./assets/logo.png", size='large')
 
 start_page = st.Page("start_page.py", title="欢迎", icon="🎉")
 bot_page = st.Page('bot.py', title='问答助手', icon='🤖')
+st.session_state.logged_in = False
 
 with st.sidebar:
     with st.expander("连接 Neo4j 数据库"):
@@ -67,6 +68,13 @@ with st.sidebar:
                 except Exception as e:
                     st.error(e, icon='❌')
         
+    with st.expander("用户登录"):
+        # st.text_input('用户名')
+        if st.text_input('验证码',type="password") == st.secrets['LOGIN_CODE']:
+            st.session_state.logged_in = True
+            st.success('登录成功', icon='✅')
+                
+                
 
 pages = [start_page, bot_page]
 pg = st.navigation(pages) # 导航栏
