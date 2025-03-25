@@ -3,7 +3,7 @@ import streamlit as st
 # import bot
 
 st.set_page_config(
-    page_title="Arcaea QA",
+    page_title="Anti-fraud QA",
     page_icon="🎉",
     layout="wide",
     initial_sidebar_state="expanded",

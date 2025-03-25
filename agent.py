@@ -31,8 +31,8 @@ tools = [
     #     func=get_movie_plot,
     # ),
     Tool.from_function(
-        name="Arcaea information",
-        description="Provide information about Arcaea questions using Cypher",
+        name="fraud cases Knowledge Graph",
+        description="Provide cases of fraud cases using Cypher",
         func = cypher_qa
     )
 ]
@@ -52,11 +52,16 @@ from langchain import hub
 from langchain_core.prompts import PromptTemplate
 
 agent_prompt = PromptTemplate.from_template("""
-You are an Arcaea gaming expert providing information about Arcaea.
-You can answer any questions related to Arcaea's contents, such as packs, songs, and charts.
-Be as helpful as possible and return as much information as possible.
 
-Do not answer any questions that do not relate to Arcaea's contents.
+You are an anti-fraud publicity expert who can provide people with various anti-fraud knowledge. At the same time, you have a knowledge graph of fraud cases.
+
+You can provide information about fraud cases and answer questions about fraud cases. Such as the types of fraud cases, the characteristics of fraud cases, the methods of fraud cases, the tools used in fraud cases, etc.
+
+If user asks a question about fraud cases, you should provide the most accurate and complete information from the knowledge graph of fraud cases, and state the answer is from the knowledge graph. You can use little of your own knowledge to answer questions, but you should not provide any information that is not in the knowledge graph.
+
+Be as helpful as possible and return as much information as possible. You can give your analysis on the information provided, but you should not provide any information that is not in the knowledge graph.
+
+Do not answer any questions that do not relate to anti-fraud.
 
 Do not answer any questions using your pre-trained knowledge, only use the information provided in the context.
 

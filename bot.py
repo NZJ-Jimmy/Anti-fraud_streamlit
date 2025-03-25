@@ -7,7 +7,7 @@ from utils import write_message
 # Set up Session State
 if "messages" not in st.session_state:
     st.session_state.messages = [
-        {"role": "assistant", "content": "你好，我是 《韵律源点 (Arcaea)》 问答助手。有什么可以帮助到你？🥰"},
+        {"role": "assistant", "content": "你好，我是关于反诈知识的问答助手。有什么可以帮助到你？🥰"},
     ]
 
 # Submit handler
