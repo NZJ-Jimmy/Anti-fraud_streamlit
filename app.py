@@ -13,6 +13,7 @@ st.logo("./assets/logo.png", size='large')
 
 start_page = st.Page("start_page.py", title="欢迎", icon="🎉")
 bot_page = st.Page('bot.py', title='问答助手', icon='🤖')
+search_page = st.Page('search.py', title='案件搜索', icon='🔍')
 st.session_state.logged_in = False
 
 with st.sidebar:
@@ -76,6 +77,6 @@ with st.sidebar:
                 
                 
 
-pages = [start_page, bot_page]
+pages = [start_page, bot_page, search_page]
 pg = st.navigation(pages) # 导航栏
 pg.run()
