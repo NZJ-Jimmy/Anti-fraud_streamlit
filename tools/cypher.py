@@ -25,6 +25,7 @@ Fine Tuning:
 - 当需要列出结点（如案例、人物、机构等）时，需要使用 `LIMIT` 限制返回结果的数量。最多返回 8 个案例即可。
 - 当需要举例时，如果结点具有 `name` 和 `description` 属性，可以返回这两个属性。
 - 请确保 Cypher 代码的正确性，不要包含语法错误。
+- 如果需要查找的信息比较笼统（例如概括案件），可以到 `description` 或 `content` 属性（如果有）中以部分关键词查找更多信息。关键词可以更精炼，以匹配更多的案例进行筛选。
 
 ## **反诈骗知识图谱数据模式**
 
@@ -34,7 +35,8 @@ Fine Tuning:
 - **属性**：
   - `name`：案件的名称，字符串类型。
   - `type`：案件类型，分类标签，枚举类型，取值范围为：`刑事`、`民事`、`行政`、`执行`、`其他`。
-  - `description`：案件的详细描述，文本类型。
+  - `description`：案件的简单描述，文本类型。
+  - `content`：判决书原文，文本类型。
   - `date_of_incident`：案发时间，Date 类型，如 `date("2020-01-01")`。（可缺失）
   - `date_of_judgment`：审判时间，Date 类型，如 `date("2020-01-01")`。（可缺失）
 
@@ -189,7 +191,7 @@ RETURN count(c) AS case_count
 2. 使用手机诈骗的案例有哪些？
 ```cypher
 MATCH (c:案件)-[r:涉案工具]->(t:工具)
-WHERE t.name = '手机'
+WHERE t.name CONTAINS '手机' OR t.type = '手机'
 RETURN c.name AS case_name, c.description AS case_description
 LIMIT 8
 ```
@@ -197,7 +199,7 @@ LIMIT 8
 3. 有哪些人涉及到了虚假投资？
 ```cypher
 MATCH (c:案件)-[r:诈骗类型]->(t:诈骗类型)
-WHERE t.name = '虚假投资' OR t.subtype = '虚假投资'
+WHERE t.name CONTAINS '投资' OR t.subtype CONTAINS '投资'
 MATCH (c)-[r:涉案嫌疑人]->(p:人物)
 RETURN p.name AS person_name, p.description AS person_description
 LIMIT 8
@@ -221,6 +223,19 @@ WITH tool_type, case_count, count(all_case) AS total_cases
 RETURN tool_type, toFloat(case_count) / toFloat(total_cases) * 100 AS percentage
 ORDER BY percentage DESC
 LIMIT 8
+
+6. 涉嫌团伙作案的案件有哪些？
+```cypher
+MATCH (c:案件)-[r:涉案嫌疑人]->(p:人物)
+WITH c, count(p) AS suspect_count
+WHERE suspect_count > 1
+RETURN c.name AS case_name, c.description AS case_description
+
+7. 与嫖娼有关的案件有哪些？
+```cypher
+MATCH (c:案件)
+WHERE c.description CONTAINS '嫖' OR c.content CONTAINS '娼'
+RETURN c.name AS case_name, c.description AS case_description
 ```
 
 Schema:

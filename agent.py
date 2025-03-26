@@ -1,7 +1,7 @@
 from llm import llm
 from graph import graph
 
-# Create a movie chat chain
+# Create a anti-fraud chat chain
 from langchain_core.prompts import ChatPromptTemplate
 from langchain.schema import StrOutputParser
 
@@ -12,7 +12,7 @@ chat_prompt = ChatPromptTemplate.from_messages(
     ]
 )
 
-movie_chat = chat_prompt | llm | StrOutputParser()
+antiFraud_chat = chat_prompt | llm | StrOutputParser()
 
 # Create a set of tools
 from langchain.tools import Tool
@@ -22,8 +22,8 @@ from tools.cypher import cypher_qa
 tools = [
     Tool.from_function(
         name="General Chat",
-        description="For general Arcaea chat not covered by other tools",
-        func=movie_chat.invoke,
+        description="For general Anti-Fraud chat not covered by other tools",
+        func=antiFraud_chat.invoke,
     ),
     # Tool.from_function(
     #     name="Movie Plot Search",
