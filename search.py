@@ -48,8 +48,8 @@ def search_cases(keyword, skip=0, limit=10):
     RETURN
         case.name AS name,
         case.description AS description,
-        fraud_type.name AS type,
-        fraud_type.subtype AS subtype,
+        COLLECT(DISTINCT fraud_type.name) AS types,
+        COLLECT(DISTINCT fraud_type.subtype) AS subtypes,
         COLLECT(DISTINCT suspect.name) AS suspects,
         COLLECT(DISTINCT victim.name) AS victims
     SKIP $skip LIMIT $limit
@@ -85,7 +85,7 @@ if st.button("搜索"):
                 for index, row in results.iterrows():
                     with st.expander(f"案件名称: **{row['name']}**", expanded=False):
                         st.markdown(f"**描述**: {row['description']}")
-                        st.markdown(f"**类型**: {row['type']} - {row['subtype']}")
+                        st.markdown(f"**类型**: {', '.join(row['types'])} - {', '.join(row['subtypes'])}")
                         st.markdown(f"**嫌疑人**: {', '.join(row['suspects'])}")
                         st.markdown(f"**被害人**: {', '.join(row['victims'])}")
                         st.write("---")

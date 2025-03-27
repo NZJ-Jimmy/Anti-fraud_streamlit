@@ -11,9 +11,7 @@ st.set_page_config(
 
 st.logo("./assets/logo.png", size='large')
 
-start_page = st.Page("start_page.py", title="欢迎", icon="🎉")
-bot_page = st.Page('bot.py', title='问答助手', icon='🤖')
-search_page = st.Page('search.py', title='案件搜索', icon='🔍')
+
 st.session_state.logged_in = False
 
 with st.sidebar:
@@ -76,7 +74,11 @@ with st.sidebar:
             st.success('登录成功', icon='✅')
                 
                 
+start_page = st.Page("start_page.py", title="欢迎", icon="🎉")
+bot_page = st.Page('bot.py', title='问答助手', icon='🤖')
+search_page = st.Page('search.py', title='案件搜索', icon='🔍')
+kg_page = st.Page('kg.py', title='知识图谱', icon='📊')
 
-pages = [start_page, bot_page, search_page]
+pages = [start_page, bot_page, search_page, kg_page]
 pg = st.navigation(pages) # 导航栏
 pg.run()
