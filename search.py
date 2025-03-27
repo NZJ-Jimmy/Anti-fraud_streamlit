@@ -35,7 +35,7 @@ def search_cases(keyword, skip=0, limit=10):
     WHERE case.content CONTAINS $keyword
         OR case.description CONTAINS $keyword
         OR case.name CONTAINS $keyword
-    RETURN count(case) AS count
+    RETURN count(DISTINCT case.name) AS count
     """
 
     query_template = """
