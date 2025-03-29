@@ -1,6 +1,9 @@
+import sys
 import neo4j
 import streamlit as st
 from pyvis.network import Network
+import os
+import uuid
 
 # ============================
 # 颜色配置
@@ -49,7 +52,6 @@ def connect_to_neo4j():
 # ============================
 # 可视化函数
 # ============================
-@st.cache_resource
 def init_net():
     net = Network(
         directed=True,
@@ -172,9 +174,8 @@ def visualize_case_network(case_name, net = None):
                 width=1.5,
                 arrows="to"
             )
-
-
         return net
+
 
 def show_net(net, height=500):
     net.save_graph("temp.html")
@@ -182,20 +183,49 @@ def show_net(net, height=500):
         html = f.read()
     st.components.v1.html(html, height=height)
 
+@st.dialog("案件详情", width="large")
+def show_case_detail(case_name):
+    cypher_query = """
+    MATCH (case:案件 {name: $case_name})
+    RETURN case
+    """
+    driver = connect_to_neo4j()
+    with st.spinner("载入案件详情……"):
+        with driver.session() as session:
+            result = session.run(cypher_query, case_name=case_name)
+            record = result.single()
+            if record:
+                case = record["case"]
+                st.write(f"案件名称: {case['name']}")
+                st.write(f"案件描述: {case['description']}")
+                with st.expander("查看判决书", expanded=False):
+                    st.write(case.get("content", "无判决书信息"))
+                with st.spinner("载入知识图谱……"):
+                    net = visualize_case_network(case_name)
+                    show_net(net, height=500)
+                # st.write(f"案件类型: {', '.join(case.get('types', []))}")
+                # st.write(f"案件子类型: {', '.join(case.get('subtypes', []))}")
+                # st.write(f"案件嫌疑人: {', '.join(case.get('suspects', []))}")
+                # st.write(f"案件被害人: {', '.join(case.get('victims', []))}")
+            else:
+                st.warning("未找到相关案件信息")
+            
+    
+
 # ============================
 # Streamlit 界面
 # ============================
 # if __name__ == "__streamlit__":
-# st.title("反诈骗案件知识图谱可视化")
-# case_name = st.text_input("请输入案件名称：", key="case_name")
+st.title("反诈骗案件知识图谱可视化")
+case_name = st.text_input("请输入案件名称：", key="case_name")
 
-# if case_name:
-#     st.write(f"正在可视化案件：{case_name}")
-#     net = visualize_case_network(case_name)
-#     if net:
-#         st.write("案件知识图谱：")
-#         show_net(net)
-#     else:
-#         st.warning("未找到相关案件信息")
-# else:
-#     st.info("请在上方输入框输入案件名称")
+if case_name:
+    st.write(f"正在可视化案件：{case_name}")
+    net = visualize_case_network(case_name)
+    if net:
+        st.write("案件知识图谱：")
+        show_net(net)
+    else:
+        st.warning("未找到相关案件信息")
+else:
+    st.info("请在上方输入框输入案件名称")

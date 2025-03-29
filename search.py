@@ -82,7 +82,7 @@ st.markdown('<h1 class="main-title">🔍 知识图谱检索</h1>', unsafe_allow_
 
 
 @st.cache_data(ttl=3600)
-def search_cases(keyword, skip=0, limit=10):
+def search_cases(keyword, skip=0, limit=5):
     """
     根据关键词在 Neo4j 数据库中搜索案件。
 
@@ -102,20 +102,28 @@ def search_cases(keyword, skip=0, limit=10):
     RETURN count(DISTINCT case.name) AS count
     """
 
-    query_template = """
-    MATCH (case:案件)-[:涉及嫌疑人]->(suspect)
-    MATCH (case:案件)-[:涉及被害人]->(victim)
-    MATCH (case:案件)-[:诈骗类型]->(fraud_type)
+    query_template = f"""
+    MATCH (case:案件)
+    OPTIONAL MATCH (case:案件)-[:涉及嫌疑人]->(suspect)
+    OPTIONAL MATCH (case:案件)-[:涉及被害人]->(victim)
+    OPTIONAL MATCH (case:案件)-[:诈骗类型]->(fraud_type)
+    OPTIONAL MATCH (case:案件)-[:涉案资产]->(asset {{type:"钱财"}})
+    OPTIONAL MATCH (case:案件)-[]->(location:地点)
+    OPTIONAL MATCH (case:案件)-[]->(law:法律法规)
     WHERE case.content CONTAINS $keyword
         OR case.description CONTAINS $keyword
         OR case.name CONTAINS $keyword
     RETURN
         case.name AS name,
         case.description AS description,
+        case.type AS type,
         COLLECT(DISTINCT fraud_type.name) AS types,
         COLLECT(DISTINCT fraud_type.subtype) AS subtypes,
         COLLECT(DISTINCT suspect.name) AS suspects,
-        COLLECT(DISTINCT victim.name) AS victims
+        COLLECT(DISTINCT victim.name) AS victims,
+        SUM(asset.amount) AS money,
+        COLLECT(DISTINCT location.province) AS locations,
+        COLLECT(DISTINCT law.name) AS laws
     SKIP $skip LIMIT $limit
     """
 
@@ -168,47 +176,58 @@ keyword = st.text_input("请输入关键词进行搜索：", "")
 if st.button("开始搜索", key="search_btn", help="点击进行多维度案件分析", use_container_width=True, type='primary') or keyword.strip():
     # 原有搜索逻辑
     if keyword.strip():
-        try:
-            # 调用搜索函数
-            total_count, results = search_cases(keyword)
+        with st.spinner("正在搜索..."):
+            try:
+                # 调用搜索函数
+                total_count, results = search_cases(keyword)
 
-            # 显示搜索结果
-            st.markdown(f"### 共找到 **{total_count}** 条匹配的案件：")
+                # 显示搜索结果
+                # st.markdown(f"### 共找到 **{total_count}** 条匹配的案件：")
+                if total_count > 0:
+                    st.toast(":rainbow[搜索完成！]", icon="🥳")
+                    for index, row in results.iterrows():
+                        # st.subheader(f"案件名称：{row['name']}", divider="rainbow")
 
-            if total_count > 0:
-                st.toast(":rainbow[搜索完成！]", icon="🥳")
-                for index, row in results.iterrows():
-                    # st.subheader(f"案件名称：{row['name']}", divider="rainbow")
-
-                    with st.expander(f"**案件详情**: **{row['name']}**", expanded=False):
-                        st.markdown(f"####  案件名称: {row['name']}")
-                        st.markdown(f"**描述**: {row['description']}")
-                        st.markdown(f"**类型**: {', '.join(row['types'])} - {', '.join(row['subtypes'])}")
-                        st.markdown(f"**嫌疑人**: {', '.join(row['suspects'])}")
-                        st.markdown(f"**被害人**: {', '.join(row['victims'])}")
-                        # st.markdown(rainbow_div, unsafe_allow_html=True)
-                        # time.sleep(0.2)
-            else:
-                st.info("没有找到匹配的案件。")
-                st.toast(":grey[没有找到匹配的案件。]", icon="😴")
-        except Exception as e:
-            st.error(f"搜索时发生错误: {e}")
+                        with st.expander(f"📝 {row['type']}案件： **{row['name']}**", expanded=True):
+                            # st.markdown(f"#### 📝 案件名称: {row['name']}")
+                            st.markdown(f"#### 📖 {row['description']}")
+                            if row['types'] and row['subtypes']: # 如果类型和子类型不为空
+                                st.markdown(f"**📂 类型**: {', '.join(row['types'])} - {', '.join(row['subtypes'])}")
+                            if row['suspects']: # 如果嫌疑人不为空
+                                st.markdown(f"**🕵️ 嫌疑人**: {', '.join(row['suspects'])}")
+                            if row['victims']:
+                                st.markdown(f"**👤 被害人**: {', '.join(row['victims'])}")
+                            if row['money']:
+                                st.markdown(f"**💰 涉案金额**: {row['money']:,.2f} 元")
+                            if row['locations']: # 如果地点不为空
+                                st.markdown(f"**📍 地点**: {', '.join(row['locations'])}")
+                            if row['laws']: # 如果法律法规不为空
+                                st.markdown(f"**📜 法律法规**: {', '.join(row['laws'])}")
+                            if st.button("查看知识图谱", key=f"view_kg_{index}", use_container_width=True):
+                                # 点击按钮后，显示案件详情
+                                kg.show_case_detail(row['name'])
+                            # st.markdown(rainbow_div, unsafe_allow_html=True)
+                            # time.sleep(0.2)
+                else:
+                    st.info("没有找到匹配的案件。")
+                    st.toast(":grey[没有找到匹配的案件。]", icon="😴")
+            except Exception as e:
+                st.error(f"搜索时发生错误: {e}")
     else: # 如果没有输入关键词
         st.warning("请输入有效的关键词进行搜索。")
+        
 else: # 如果没有点击搜索按钮
-    cases_names = get_cases_names()
     
     # 显示随机推荐的案例名称，以小按钮的形式
     # st.markdown("### 智能推荐案件：")
     with st.spinner("载入推荐案件..."):
+        cases_names = get_cases_names()
         cols = st.columns(5)
         for i, case_name in enumerate(cases_names):
             with cols[i % 5]:
                 if st.button(case_name, key=f"case_{i}", use_container_width=True):
                     # 点击按钮后，显示案件详情
-                    # st.session_state.case_name = case_name
-                    # st.experimental_rerun()
-                    pass
+                    kg.show_case_detail(case_name)
     
     # st.markdown(rainbow_div, unsafe_allow_html=True)
     # st.markdown("### 知识图谱可视化：")
