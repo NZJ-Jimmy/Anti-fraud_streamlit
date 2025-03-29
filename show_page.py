@@ -189,7 +189,7 @@ def show_article_detail(article_id):
 
 # 主界面
 def main():
-    st.set_page_config(page_title="个人文章管理", layout="wide")
+    # st.set_page_config(page_title="个人文章管理", layout="wide")
     init_data()
     
     with st.sidebar:

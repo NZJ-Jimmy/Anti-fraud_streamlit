@@ -4,18 +4,18 @@ import plotly.express as px
 
 def risk_assessment_page():
     # ========== 页面配置 ==========
-    st.set_page_config(
-        page_title="智能反诈风险评估系统",
-        layout="wide",
-        page_icon="🛡️",
-        initial_sidebar_state="expanded"
-    )
+    # st.set_page_config(
+    #     page_title="智能反诈风险评估系统",
+    #     layout="wide",
+    #     page_icon="🛡️",
+    #     initial_sidebar_state="expanded"
+    # )
     
     # ========== 全局样式 ==========
     st.markdown("""
     <style>
         .main .block-container {max-width: 100% !important; padding: 2rem 4rem;}
-        div[data-testid="stForm"] {background: #f8f9fa; padding: 2rem; border-radius: 15px;}
+        div[data-testid="stForm"] {padding: 2rem; border-radius: 15px;}
         .stPlotlyChart {border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);}
         h2 {border-bottom: 2px solid #dee2e6; padding-bottom: 0.5rem;}
     </style>
