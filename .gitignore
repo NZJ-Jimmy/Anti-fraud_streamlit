@@ -1,3 +1,5 @@
+dataset/
+model/
 __pycache__
 .streamlit/secrets.toml
 .env
