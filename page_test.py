@@ -115,7 +115,7 @@ def risk_assessment_page():
                         help="高回报承诺通常是诈骗诱饵"
                     )
             social_media = st.slider("每日社交媒体使用时长(小时)", 
-                                   0, 12, 3,
+                                   0, 24, 3,
                                    help="过度暴露个人信息增加风险")
 
         submitted = st.form_submit_button(
@@ -157,74 +157,202 @@ def risk_assessment_page():
         print(user_profile["接触诈骗类型"])
 
         # ========== 高级可视化 ==========
-        tab1, tab2, tab3 = st.tabs(["📝 风险分析报告", "🛡️ 防御模拟", "📈 趋势分析"])
-
+        # tab1, tab2, tab3 = st.tabs(["📝 风险分析报告", "🛡️ 防御模拟", "📈 趋势分析"])
+        tab1, tab2 = st.tabs(["📝 风险分析报告", "📊 指标关联分析"])
+        # "🛡️ 防御模拟", "📈 趋势分析",
         with tab1:
             st.write(user_profile)
-
         with tab2:
-            # 防御模拟器
-            st.subheader("防护策略模拟")
-            simulate_defense()
+            c1, c2 = st.columns([1, 2])
+            with c1:
+                st.markdown(
+                    "<h3 style='text-align: center;'>风险因子关联分析热力图</h3>",
+                    unsafe_allow_html=True,
+                )
 
-        with tab3:
-            # 历史趋势
-            st.subheader("风险趋势预测")
-            show_trend_analysis(150)
+                # 数据预处理
+                sample_data = pd.DataFrame({
+                    "年龄": [28, 35, 22, 45, 31, 27, 50, 38, 29, 33],
+                    "地区编码": [0, 0, 1, 2, 0, 1, 2, 0, 0, 1],
+                    "收入等级": [3, 4, 2, 2, 3, 3, 1, 4, 2, 3],
+                    "社交时长": [5, 3, 7, 2, 4, 6, 1, 3, 5, 4],
+                    "诈骗类型数": [3, 1, 2, 0, 2, 4, 1, 2, 3, 1],
+                    "心理评估分": [65, 82, 48, 73, 70, 55, 60, 85, 68, 58],
+                    "风险值": [85, 68, 92, 58, 75, 88, 63, 70, 82, 78]
+                })
 
-def calculate_risk(age, education, income, fraud_types, loss_amount, report_police):
-    """示例风险评估逻辑"""
-    # 实现具体的风险评估算法
-    # return min(150, 
-    #           age_factor(age) + 
-    #           edu_factor(education) + 
-    #           income_factor(income) + 
-    #           contact_factor(fraud_types) + 
-    #           loss_factor(loss_amount, report_police))
-    return 150
+                # 计算相关系数矩阵
+                corr_matrix = sample_data.corr(method='spearman')
 
-def get_risk_factors(*args):
-    """生成风险因素数据"""
-    # 实现具体因素分析逻辑
-    return pd.DataFrame({
-        '因素': ['年龄特征', '教育程度', '收入水平', '接触频率', '历史损失'],
-        '贡献值': [25, 30, 20, 35, 40]
-    })
+                # 生成热力图
+                fig = px.imshow(
+                    corr_matrix,
+                    text_auto=".2f",
+                    color_continuous_scale='RdBu_r',
+                    labels=dict(color="相关系数"),
+                    width=650,
+                    height=650
+                )
+                fig.update_layout(
+                    xaxis=dict(tickangle=45, tickfont=dict(size=10)),
+                    yaxis=dict(tickfont=dict(size=10)),
+                )
+                fig.update_traces(
+                    hovertemplate="<b>%{x}</b> vs <b>%{y}</b><br>相关系数: %{z:.2f}",
+                    hoverongaps=False
+                )
 
-def load_geo_data():
-    """加载地理数据"""
-    # 示例数据
-    return pd.DataFrame({
-        '城市': ['北京','上海','广州','深圳','成都'],
-        '经度': [116.40,121.47,113.26,114.05,104.06],
-        '纬度': [39.90,31.23,23.12,22.55,30.67],
-        '风险指数': [82,78,85,88,75]
-    })
+                # 可视化呈现
+                st.plotly_chart(fig, use_container_width=True)
 
-def simulate_defense():
-    """防御策略模拟"""
-    cols = st.columns(3)
-    with cols[0]:
-        firewall = st.slider("📱 反诈APP防护等级", 1, 5, 3)
-    with cols[1]:
-        education = st.select_slider("📖 反诈学习频率", 
-                                   ["从不","每月","每周","每天"])
-    with cols[2]:
-        alert = st.radio("🚨 预警接收方式", ["短信","APP推送","电话提醒"])
-    
-    # 模拟风险降低计算
-    reduction = firewall*15 + {"从不":0,"每月":10,"每周":25,"每天":40}[education]
-    st.metric("预计风险降低幅度", f"{reduction}%", delta_color="inverse")
+                # 数据表格展示
+                with st.expander("📜 原始相关系数矩阵"):
+                    styled_matrix = corr_matrix.style\
+                        .background_gradient(cmap='RdBu_r', vmin=-1, vmax=1)\
+                        .format("{:.2f}")\
+                        .set_table_styles([{
+                            'selector': 'th',
+                            'props': [('font-size', '10pt'), 
+                                    ('background-color', '#f8f9fa')]
+                        }])
+                    st.dataframe(styled_matrix, use_container_width=True)
 
-def show_trend_analysis(current_score):
-    """趋势分析"""
-    # 生成模拟数据
-    timeline = pd.date_range(start="2023-01", periods=6, freq='M')
-    history = [82, 75, 68, 65, 63, current_score]
-    
-    fig = px.line(x=timeline, y=history, markers=True,
-                 labels={'x':'时间', 'y':'风险指数'},
-                 color_discrete_sequence=["#FF6B6B"])
-    st.plotly_chart(fig, use_container_width=True)
+                # with c2:
+                #     st.markdown(
+                #         "<h3 style='text-align: center;'>多维度风险特征分析</h3>",
+                #         unsafe_allow_html=True,
+                #     )
+
+                #     # 使用与热力图相同的数据集
+                #     parallel_data = sample_data.copy()
+
+                #     # 创建分类变量映射（增强可解释性）
+                #     area_mapping = {0: "城市", 1: "县城", 2: "农村"}
+                #     income_mapping = {
+                #         1: "无固定收入",
+                #         2: "3000以下",
+                #         3: "3000-8000",
+                #         4: "8000+",
+                #     }
+
+                #     parallel_data["地区类型"] = parallel_data["地区编码"].map(area_mapping)
+                #     parallel_data["收入等级"] = parallel_data["收入等级"].map(
+                #         income_mapping
+                #     )
+
+                #     # 生成平行坐标图
+                #     fig = px.parallel_coordinates(
+                #         parallel_data,
+                #         color="风险值",
+                #         dimensions=[
+                #             "年龄",
+                #             "地区类型",
+                #             "收入等级",
+                #             "社交时长",
+                #             "诈骗类型数",
+                #             "心理评估分",
+                #             "风险值",
+                #         ],
+                #         color_continuous_scale=px.colors.diverging.Tealrose,
+                #         labels={
+                #             "年龄": "年龄（岁）",
+                #             "社交时长": "日均社交时长（小时）",
+                #             "诈骗类型数": "遭遇诈骗类型数",
+                #             "心理评估分": "心理脆弱指数",
+                #             "风险值": "风险评分",
+                #         },
+                #         height=700,
+                #     )
+
+                #     # 样式优化
+                #     fig.update_layout(
+                #         margin=dict(l=80, r=50, t=80, b=50),
+                #         coloraxis_colorbar=dict(
+                #             title="风险梯度",
+                #             thicknessmode="pixels",
+                #             thickness=20,
+                #             lenmode="pixels",
+                #             len=300,
+                #             yanchor="middle",
+                #             y=0.5,
+                #         ),
+                #         font=dict(size=10),
+                #     )
+
+                #     # 添加分析注释
+                #     fig.add_annotation(
+                #         x=0.95,
+                #         y=1.15,
+                #         xref="paper",
+                #         yref="paper",
+                #         text="▲ 线条颜色越暖代表风险越高",
+                #         showarrow=False,
+                #         font=dict(color="#666666"),
+                #     )
+
+                #     st.plotly_chart(fig, use_container_width=True)
+
+                #     # 数据说明折叠面板
+                #     with st.expander("📌 分析指南"):
+                #         st.markdown(
+                #             """
+                #         ### 图形解读技巧：
+                #         - **颜色映射**：暖色调（红）→ 高风险，冷色调（蓝）→ 低风险
+                #         - **连线模式**：观察陡峭的转折点，识别异常关联路径
+                #         - **特征聚类**：垂直线段聚集区域表示特征值集中分布
+                #         - **典型路径**：鼠标悬停可追踪完整个体特征轮廓
+                #         """
+                #         )
+
+                with c2:
+                    st.markdown(
+                        "<h3 style='text-align: center;'>多变量关联路径分析图</h3>",
+                        unsafe_allow_html=True,
+                    )
+
+                    # 扩展数据
+                    parallel_df = pd.DataFrame({
+                        '年龄': [28, 35, 22, 45, 31, 27, 50, 38, 29, 33],
+                        '收入等级': [3, 4, 2, 2, 3, 3, 1, 4, 2, 3],
+                        '社交时长': [5, 3, 7, 2, 4, 6, 1, 3, 5, 4],
+                        '诈骗类型数': [3, 1, 2, 0, 2, 4, 1, 2, 3, 1],
+                        '心理评估分': [65, 82, 48, 73, 70, 55, 60, 85, 68, 58],
+                        '风险值': [85, 68, 92, 58, 75, 88, 63, 70, 82, 78]
+                    })
+
+                    # 创建平行坐标图
+                    fig = px.parallel_coordinates(
+                        parallel_df,
+                        color="风险值",
+                        color_continuous_scale=px.colors.diverging.Tealrose,
+                        labels={
+                            "年龄": "Age",
+                            "收入等级": "Income Level",
+                            "社交时长": "Social Time",
+                            "诈骗类型数": "Fraud Types",
+                            "心理评估分": "Psychological Score",
+                            "风险值": "Risk Value"
+                        },
+                        height=750,
+                    )
+                    fig.update_traces(line=dict(width=3))
+                    # 调整图表边距，使布局更加紧凑
+                    fig.update_layout(
+                        margin=dict(l=80, r=50, t=80, b=50),
+                        font=dict(size=13),
+                        xaxis=dict(
+                            tickangle=45,
+                            tickfont=dict(size=10, color="black"),  # 设置刻度颜色为黑色
+                        ),
+                        yaxis=dict(
+                            tickfont=dict(size=10, color="black")  # 设置刻度颜色为黑色
+                        ),
+                    )
+
+                    # 显示平行坐标图
+                    st.plotly_chart(fig, use_container_width=True)
+
+    else:
+        st.info("请填写所有信息后点击开始风险评估查看结果😴")
 
 risk_assessment_page()
