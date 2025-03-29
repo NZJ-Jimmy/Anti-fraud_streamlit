@@ -216,16 +216,16 @@ def show_case_detail(case_name):
 # Streamlit 界面
 # ============================
 # if __name__ == "__streamlit__":
-st.title("反诈骗案件知识图谱可视化")
-case_name = st.text_input("请输入案件名称：", key="case_name")
+# st.title("反诈骗案件知识图谱可视化")
+# case_name = st.text_input("请输入案件名称：", key="case_name")
 
-if case_name:
-    st.write(f"正在可视化案件：{case_name}")
-    net = visualize_case_network(case_name)
-    if net:
-        st.write("案件知识图谱：")
-        show_net(net)
-    else:
-        st.warning("未找到相关案件信息")
-else:
-    st.info("请在上方输入框输入案件名称")
+# if case_name:
+#     st.write(f"正在可视化案件：{case_name}")
+#     net = visualize_case_network(case_name)
+#     if net:
+#         st.write("案件知识图谱：")
+#         show_net(net)
+#     else:
+#         st.warning("未找到相关案件信息")
+# else:
+#     st.info("请在上方输入框输入案件名称")

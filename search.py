@@ -82,7 +82,7 @@ st.markdown('<h1 class="main-title">🔍 知识图谱检索</h1>', unsafe_allow_
 
 
 @st.cache_data(ttl=3600)
-def search_cases(keyword, skip=0, limit=5):
+def search_cases(keyword, skip=0, limit=30):
     """
     根据关键词在 Neo4j 数据库中搜索案件。
 
@@ -104,15 +104,15 @@ def search_cases(keyword, skip=0, limit=5):
 
     query_template = f"""
     MATCH (case:案件)
+    WHERE case.content CONTAINS $keyword
+        OR case.description CONTAINS $keyword
+        OR case.name CONTAINS $keyword
     OPTIONAL MATCH (case:案件)-[:涉及嫌疑人]->(suspect)
     OPTIONAL MATCH (case:案件)-[:涉及被害人]->(victim)
     OPTIONAL MATCH (case:案件)-[:诈骗类型]->(fraud_type)
     OPTIONAL MATCH (case:案件)-[:涉案资产]->(asset {{type:"钱财"}})
     OPTIONAL MATCH (case:案件)-[]->(location:地点)
     OPTIONAL MATCH (case:案件)-[]->(law:法律法规)
-    WHERE case.content CONTAINS $keyword
-        OR case.description CONTAINS $keyword
-        OR case.name CONTAINS $keyword
     RETURN
         case.name AS name,
         case.description AS description,
@@ -163,16 +163,13 @@ def get_cases_names(limit=5):
 
 
 # 在搜索输入框下方添加筛选条件侧边栏
-with st.sidebar:
-    st.header("高级筛选")
-    case_type = st.selectbox("案件类型", ["全部", "电信诈骗", "网络诈骗", "金融诈骗"])
-    date_range = st.date_input("时间范围", [])
-    risk_level = st.slider("风险等级", 1, 5, (1,5))
+
 
 # 搜索输入框
 keyword = st.text_input("请输入关键词进行搜索：", "")
 
 # 搜索按钮
+
 if st.button("开始搜索", key="search_btn", help="点击进行多维度案件分析", use_container_width=True, type='primary') or keyword.strip():
     # 原有搜索逻辑
     if keyword.strip():
@@ -184,6 +181,15 @@ if st.button("开始搜索", key="search_btn", help="点击进行多维度案件
                 # 显示搜索结果
                 # st.markdown(f"### 共找到 **{total_count}** 条匹配的案件：")
                 if total_count > 0:
+                    # 高级筛选
+                    with st.popover("筛选条件", use_container_width=True):
+                        case_types = st.multiselect("案件类型", results['type'].unique().tolist(), default=results['type'].unique().tolist())
+                        money_range = st.slider("涉案金额范围", min_value=int(results['money'].min()), max_value=int(results['money'].max())+1, value=(int(results['money'].min()), int(results['money'].max())+1))
+                            
+                        results = results[results['type'].isin(case_types)]
+                        results = results[(results['money'] >= money_range[0]) & (results['money'] <= money_range[1])]
+                        total_count = len(results)
+                            
                     st.toast(":rainbow[搜索完成！]", icon="🥳")
                     for index, row in results.iterrows():
                         # st.subheader(f"案件名称：{row['name']}", divider="rainbow")
@@ -203,7 +209,7 @@ if st.button("开始搜索", key="search_btn", help="点击进行多维度案件
                                 st.markdown(f"**📍 地点**: {', '.join(row['locations'])}")
                             if row['laws']: # 如果法律法规不为空
                                 st.markdown(f"**📜 法律法规**: {', '.join(row['laws'])}")
-                            if st.button("查看知识图谱", key=f"view_kg_{index}", use_container_width=True):
+                            if st.button("🔍 查看详情", key=f"view_kg_{index}", use_container_width=True):
                                 # 点击按钮后，显示案件详情
                                 kg.show_case_detail(row['name'])
                             # st.markdown(rainbow_div, unsafe_allow_html=True)
@@ -237,3 +243,4 @@ else: # 如果没有点击搜索按钮
             for case_name in cases_names:
                 net = kg.visualize_case_network(case_name, net)
                 kg.show_net(net, height=500)
+
