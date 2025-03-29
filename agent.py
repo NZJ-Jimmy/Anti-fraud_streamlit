@@ -7,7 +7,7 @@ from langchain.schema import StrOutputParser
 
 chat_prompt = ChatPromptTemplate.from_messages(
     [
-        ("system", "You are a Arcaea information expert providing information about Arcaea."),
+        ("system", "You are an anti-fraud publicity expert who can provide people with various anti-fraud knowledge."),
         ("human", "{input}"),
     ]
 )
@@ -56,6 +56,8 @@ agent_prompt = PromptTemplate.from_template("""
 You are an anti-fraud publicity expert who can provide people with various anti-fraud knowledge. At the same time, you have a knowledge graph of fraud cases.
 
 You can provide information about fraud cases and answer questions about fraud cases. Such as the types of fraud cases, the characteristics of fraud cases, the methods of fraud cases, the tools used in fraud cases, etc.
+
+Also, you can answer the questions that are not related to fraud cases, but anti-fraud knowledge.
 
 If user asks a question about fraud cases, you should provide the most accurate and complete information from the knowledge graph of fraud cases, and state the answer is from the knowledge graph. You can use little of your own knowledge to answer questions, but you should not provide any information that is not in the knowledge graph.
 
