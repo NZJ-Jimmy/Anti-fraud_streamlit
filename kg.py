@@ -37,6 +37,7 @@ rel_color_map = {
 # ============================
 # 数据库连接配置
 # ============================
+@st.cache_resource
 def connect_to_neo4j():
     """连接 Neo4j 数据库"""
     uri = st.session_state.neo4j_uri
@@ -48,6 +49,7 @@ def connect_to_neo4j():
 # ============================
 # 可视化函数
 # ============================
+@st.cache_resource
 def init_net():
     net = Network(
         directed=True,
@@ -173,23 +175,27 @@ def visualize_case_network(case_name, net = None):
 
 
         return net
-        net.save_graph("temp.html")
-        with open("temp.html", "r", encoding="utf-8") as f:
-            html = f.read()
-        st.components.v1.html(html, width=1200, height=800)
+
+def show_net(net, height=500):
+    net.save_graph("temp.html")
+    with open("temp.html", "r", encoding="utf-8") as f:
+        html = f.read()
+    st.components.v1.html(html, height=height)
 
 # ============================
 # Streamlit 界面
 # ============================
-st.title("反诈骗案件知识图谱可视化")
-case_name = st.text_input("请输入案件名称：", key="case_name")
+# if __name__ == "__streamlit__":
+# st.title("反诈骗案件知识图谱可视化")
+# case_name = st.text_input("请输入案件名称：", key="case_name")
 
-if case_name:
-    st.write(f"正在可视化案件：{case_name}")
-    net = visualize_case_network(case_name)
-    net.save_graph("temp.html")
-    with open("temp.html", "r", encoding="utf-8") as f:
-        html = f.read()
-    st.components.v1.html(html, width=800, height=600)
-else:
-    st.info("请在上方输入框输入案件名称")
+# if case_name:
+#     st.write(f"正在可视化案件：{case_name}")
+#     net = visualize_case_network(case_name)
+#     if net:
+#         st.write("案件知识图谱：")
+#         show_net(net)
+#     else:
+#         st.warning("未找到相关案件信息")
+# else:
+#     st.info("请在上方输入框输入案件名称")

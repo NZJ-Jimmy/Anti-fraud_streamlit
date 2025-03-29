@@ -4,6 +4,7 @@ import neo4j
 from pyvis.network import Network
 import plotly.express as px
 import time
+import kg
 
 # 彩虹色横线
 rainbow_div = """
@@ -16,6 +17,7 @@ rainbow_div = """
 # ============================
 # 数据库连接配置
 # ============================
+@st.cache_resource
 def connect_to_neo4j():
     """连接 Neo4j 数据库"""
     uri = st.session_state.neo4j_uri
@@ -127,6 +129,30 @@ def search_cases(keyword, skip=0, limit=10):
         result = session.run(query_template, keyword=keyword, skip=skip, limit=limit)
         return total_count, pd.DataFrame(result.data())
 
+@st.cache_data(ttl=3600)
+def get_cases_names(limit=5):
+    """
+    随机返回案件名称列表，用于搜索建议。
+
+    Args:
+        limit (int): 返回的案件名称数量，默认为 5
+
+    Returns:
+        list: 随机案件名称列表。
+    """
+    query_template = """
+    MATCH (c:案件)
+    RETURN c.name
+    ORDER BY rand()
+    LIMIT $limit
+    """
+
+    driver = connect_to_neo4j()
+    with driver.session() as session:
+        # 查询案件详情
+        result = session.run(query_template, limit=limit)
+        return result.value()
+
 
 # 在搜索输入框下方添加筛选条件侧边栏
 with st.sidebar:
@@ -167,5 +193,28 @@ if st.button("开始搜索", key="search_btn", help="点击进行多维度案件
                 st.toast(":grey[没有找到匹配的案件。]", icon="😴")
         except Exception as e:
             st.error(f"搜索时发生错误: {e}")
-    else:
+    else: # 如果没有输入关键词
         st.warning("请输入有效的关键词进行搜索。")
+else: # 如果没有点击搜索按钮
+    cases_names = get_cases_names()
+    
+    # 显示随机推荐的案例名称，以小按钮的形式
+    # st.markdown("### 智能推荐案件：")
+    with st.spinner("载入推荐案件..."):
+        cols = st.columns(5)
+        for i, case_name in enumerate(cases_names):
+            with cols[i % 5]:
+                if st.button(case_name, key=f"case_{i}", use_container_width=True):
+                    # 点击按钮后，显示案件详情
+                    # st.session_state.case_name = case_name
+                    # st.experimental_rerun()
+                    pass
+    
+    # st.markdown(rainbow_div, unsafe_allow_html=True)
+    # st.markdown("### 知识图谱可视化：")
+    with st.spinner("载入知识图谱..."):
+        net = kg.init_net()
+        with st.empty():
+            for case_name in cases_names:
+                net = kg.visualize_case_network(case_name, net)
+                kg.show_net(net, height=500)
