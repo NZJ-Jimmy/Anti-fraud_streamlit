@@ -94,7 +94,7 @@ def get_openai_response(user_profile):
     3. 可以针对用户信息中的内容的部分特征，给出风险用户建议。
     4. 只需要给出约 200 字的建议即可。建议有条理地列出。
     5. 适量加入 emoji 表情，使得建议更加生动有趣。
-    6. 不要输出一共写了多少字数。
+    6. 分点回答时 emoji 表情或 icon 不要放在句子结尾。
     7. 不要输出任何其它的内容，只输出风险分析报告与建议内容。
 
     风险分析报告与建议内容：
@@ -233,19 +233,28 @@ def risk_assessment_page():
             "未验证优惠信息": reward_react,
             "每日社交使用时长(小时)": social_media,
         }
-        with st.spinner("🤯 正在评估中..."):
-            try:
-                # 生成风险分析报告
-                response = get_openai_response(user_profile)
-            except Exception as e:
-                st.error(f"❌ 评估失败，请稍后再试。错误信息：{e}")
-                st.stop()
+        # with st.spinner("🤯 正在评估中..."):
+        #     try:
+        #         # 生成风险分析报告
+        #         response = get_openai_response(user_profile)
+        #     except Exception as e:
+        #         st.error(f"❌ 评估失败，请稍后再试。错误信息：{e}")
+        #         st.stop()
         # print(user_profile["接触诈骗类型"])
-        st.success("✅ 评估完成！正在为您生成风险分析报告🫡")
+        # st.success("✅ 评估完成！正在为您生成风险分析报告🫡")
+        tag = st.empty()
         tab1, tab2 = st.tabs(["📝 风险分析报告", "📊 指标关联分析"])
         with tab1:
+            with st.spinner("🤯 正在评估中..."):
+                try:
+                    # 生成风险分析报告
+                    response = get_openai_response(user_profile)
+                    st.write_stream(response)
+                except Exception as e:
+                    st.error(f"❌ 评估失败，请稍后再试。错误信息：{e}")
+                    st.stop()
             # st.write(user_profile)
-            st.write_stream(response)
+            tag.success("✅ 评估完成！已为您生成风险分析报告🫡")
             st.toast(":rainbow[结果已就绪！]", icon="🎉")
             st.balloons()
         with tab2:
