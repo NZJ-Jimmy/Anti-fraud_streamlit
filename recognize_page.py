@@ -1,37 +1,68 @@
+from unittest import result
+from requests import session
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 from streamlit_extras.colored_header import colored_header
 from streamlit_extras.stylable_container import stylable_container
+from sympy import use
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import numpy as np
-import time
-import torch
-import fraud_msg_cls
-import jieba
+
 from collections import Counter
 import json
+from openai import OpenAI
+import openai
+
+with st.sidebar:
+    with st.expander("配置 OpenAI API Key"):
+        use_custom_openai = st.checkbox('自定义 OpenAI 连接配置')
+        
+        if use_custom_openai:
+            st.session_state.openai_api_key = st.text_input('OpenAI API Key', type='password')
+            st.session_state.openai_model = st.text_input('OpenAI Model')
+            st.session_state.openai_base_url = st.text_input('OpenAI Base URL')
+        else:
+            st.session_state.openai_api_key = st.secrets['OPENAI_API_KEY']
+            st.session_state.openai_model = st.secrets['OPENAI_MODEL']
+            st.session_state.openai_base_url = st.secrets['OPENAI_BASE_URL']
+        
+        if st.button('检查 API Key 可用性'):
+            import openai
+            with st.spinner('正在验证...'):
+                try:
+                    openai.base_url = st.session_state.openai_base_url
+                    openai.api_key = st.session_state.openai_api_key
+                    openai.models.retrieve(st.session_state.openai_model)
+                    st.success('API Key 验证成功', icon='✅')
+                except Exception as e:
+                    st.error(e, icon='❌')
 
 plt.rcParams["font.sans-serif"] = ["SimHei"]  # 用来正常显示中文标签
 plt.rcParams["axes.unicode_minus"] = False  # 用来正常显示负号
 
-with open("fraud_keywords.json", "r", encoding="utf-8") as f:
-    keywords = json.load(f)
-keywords = [keywords[i][0] for i in range(len(keywords))]
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+with st.spinner("正在加载模型..."):
+    with open("fraud_keywords.json", "r", encoding="utf-8") as f:
+        keywords = json.load(f)
+    keywords = [keywords[i][0] for i in range(len(keywords))]
+    
+    import time
+    import torch
+    import jieba
+    import fraud_msg_cls
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # ---------------------------
 # 页面配置
 # ---------------------------
-st.set_page_config(
-    page_title="智能诈骗信息检测系统",
-    page_icon="🛡️",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
+# st.set_page_config(
+#     page_title="智能诈骗信息检测系统",
+#     page_icon="🛡️",
+#     layout="wide",
+#     initial_sidebar_state="expanded",
+# )
 
 def extract_keywords(text, top_k=3):
     """提取文本中的危险关键词"""
@@ -117,7 +148,6 @@ def predict_text(text):
 # 侧边栏说明
 # ---------------------------
 with st.sidebar:
-    st.header("🔖 使用指南")
     with st.expander("📌 操作说明"):
         st.markdown(
             """
@@ -135,16 +165,6 @@ with st.sidebar:
 
         analysis_depth = st.selectbox("分析深度", ["快速模式", "标准模式", "深度模式"])
     
-    with st.container(border=True):
-        st.markdown("### ☁️ 动态词云")
-        try:
-            with open("wordcloud.html", "r", encoding="utf-8") as f:
-                html_content = f.read()
-            st.components.v1.html(html_content, height=300)
-        except FileNotFoundError:
-            st.warning("词云文件未找到")
-        except Exception as e:
-            st.error(f"词云加载失败: {str(e)}")
 
 
 # ---------------------------
@@ -201,184 +221,230 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+def get_suggestions_stream(msg, prediction):
+    prompt_template = """
+    我这里有一条疑似欺诈的信息，以下是信息内容：
+    {msg}
 
+    由我训练的模型得到，该短信属于的类别为：
+    {prediction}
+
+    请你根据我训练的模型的预测结果，针对模型预测的可能性最大的的**一种类别**，给出针对收到短信的风险用户建议。
+
+    要求：
+    1. 不要输出模型预测的概率值
+    2. 可以针对短信中的内容的部分特征，结合模型预测的类别的典型特征，给出风险用户的建议。
+    3. 如果模型预测的类别的典型特征不足以给出建议，可以根据短信的内容给出建议。
+    4. 如果模型预测为无风险，可以恭喜用户，但也可以给出一些建议。
+    5. 只需要给出约 200 字的建议即可。建议有条理地列出。
+    6. 适量加入 emoji 表情，使得建议更加生动有趣。
+
+    建议内容：
+    """
+    prompt = prompt_template.format(msg=msg, prediction=prediction)
+    response_stream = OpenAI().chat.completions.create(
+        model=st.session_state.openai_model,
+        messages=[
+            {"role": "system", "content": "The following is a message that I received from a user and I need your help to respond to it."},
+            {"role": "user", "content": prompt},
+        ],
+        max_tokens=1024,
+        temperature=1.0,
+        stream=True,
+    )
+    return response_stream
+
+# 开始检测
+
+def visualize_result(input_text, result_container):
+    # 检测输入文本长度
+    with result_container:
+        if len(input_text) < 10:
+            st.error("⚠️ 输入文本过短，请至少输入10个字符")
+        else:
+        # 动态可视化组件
+        # 运行
+            with st.spinner("▸▸ 正在生成可视化报告..."):
+                try:
+                    result = predict_text(input_text)
+                    st.toast(":rainbow[识别完成！]", icon="🥳")
+
+                except Exception as e:
+                    st.error(f"⚠️ 发生错误: {str(e)}")
+                    st.stop()
+                    
+                # 可视化结果
+                colored_header(
+                    label="🎯 识别结果",
+                    description="基于 DeepSeek 微调的文本分类引擎 🚀",
+                    color_name="gray-70",
+                )
+                    
+                col1, col2, col3 = st.columns([1,1,1], gap="large")
+                
+                with col1:
+                    # 获取并显示结果
+                    st.toast(":rainbow[结果已就绪！]", icon="🎉")
+                    risk_level = result['features']['风险等级']
+                    keywords = result['features']['关键词']
+                    # 颜色映射配置
+                    color_map = {
+                        "无风险": "#2ecc71",
+                        "低风险": "#f1c40f",
+                        "中风险": "#f39c12",
+                        "高风险": "#e74c3c"
+                    }
+                    # 动态生成显示内容
+                    keywords_display = '无' if risk_level == "无风险" else ', '.join(keywords) or '无'
+                    # with result_container.container():
+                    st.markdown(
+                        f"""
+                        <div style="padding:1rem; border-radius:15px; background:{color_map[risk_level]};">
+                            <h3 style="color:white; text-align:center; margin:1rem 0;">{risk_level}</h2>
+                            <h4 style="color:white; text-align:center; ">🎯 {result['prediction']}</h4>
+                            <h5 style="color:white; text-align:left; ">⚠️ 危险关键词：{keywords_display}</h4>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+
+                with col2:
+                    # st.markdown("### 📊 实时特征分析")
+                    # 动态获取特征数据
+                    risk_level = result["features"]["风险等级"]
+
+                    # 根据风险等级调整语义指标
+                    raw_semantic_value = result["features"]["语义异常度"]  # 获取原始值
+                    semantic_label = "安全置信度" if risk_level == "无风险" else "语义异常度"
+
+                    features = {
+                        "关键词风险": result["features"]["关键词风险"],
+                        semantic_label: raw_semantic_value,  # 动态标签名
+                        "链接风险": result["features"]["链接风险"],
+                        "紧迫性指数": result["features"]["紧迫性指数"],
+                    }
+
+                    # 雷达图数据准备
+                    categories = list(features.keys())
+                    values = list(features.values())
+
+                    # 使雷达图闭合
+                    values += [values[0]]
+                    categories += [categories[0]]
+
+                    # 创建雷达图
+                    fig_radar = go.Figure()
+                    fig_radar.add_trace(
+                        go.Scatterpolar(
+                            r=values,
+                            theta=categories,
+                            fill="toself",
+                            marker=dict(size=8, color="#ff4b4b"),
+                            line=dict(color="#ff4b4b", width=3),
+                            name="特征评分",
+                        )
+                    )
+                    fig_radar.update_layout(
+                        polar=dict(
+                            domain=dict(x=[0.1, 0.9], y=[0.1, 0.7]),
+                            radialaxis=dict(range=[0, 100]),
+                        ),
+                        margin=dict(l=20, r=20, t=15, b=20),
+                        height=200,
+                    )
+                    st.plotly_chart(fig_radar, use_container_width=True)
+
+                with col3:
+                    # 创建仪表盘
+                    fig_gauge = go.Figure(
+                        go.Indicator(
+                            mode="gauge+number",
+                            value=result["probability"] * 100,
+                            number={"suffix": "%"},
+                            domain={"x": [0, 1], "y": [0, 1]},
+                            title={"text": "置信度仪表盘"},
+                            gauge={
+                                "axis": {"range": [0, 100]},
+                                "bar": {"color": "#ff6b6b"},
+                                "steps": [
+                                    {"range": [0, 30], "color": "#63cdda"},
+                                    {"range": [30, 70], "color": "#ffeaa7"},
+                                    {"range": [70, 100], "color": "#ff6b6b"},
+                                ],
+                                "shape": "angular",
+                            },
+                        )
+                    )
+                    fig_gauge.update_layout(
+                        height=200,
+                        margin=dict(t=50, b=8)
+                    )
+                    st.plotly_chart(fig_gauge, use_container_width=True)
+                
+            # 结果分析
+            colored_header(
+                label="💡 建议与防护",
+                description="🔍 基于 DeepSeek 大模型的建议生成",
+                color_name="gray-70",
+            )
+            
+            with st.spinner("▸▸ 正在生成建议..."):
+                try:
+                    suggestions_stream = get_suggestions_stream(input_text, result['features']['风险等级'])
+                    st.write_stream(suggestions_stream)
+                    st.toast(":rainbow[建议已生成！]", icon="🎉")
+                except Exception as e:
+                    st.error(f"⚠️ 发生错误: {str(e)}")
+                    st.stop()
+                
+                
 # ---------------------------
 # 界面布局
 # ---------------------------
-colored_header(
-    label="智能诈骗信息检测",
-    description="基于 DeepSeek 微调的文本分类引擎",
-    color_name="gray-70",
-)
+# 标题
+st.markdown('<h1 class="main-title">🛡️ 智能诈骗信息检测 🚀</h1>', unsafe_allow_html=True)
+st.session_state.show_result = False
+
+text_col, button_col = st.columns([3, 1], gap="large")
+result_area = st.empty()
+
+
 
 # 输入区域
-with st.container(border=True):
+with text_col:
     input_text = st.text_area(
         "📝 请输入待检测的文本内容：",
         height=100,
         placeholder="例：【顺丰】尊敬的客户，您使用顺丰的频率较高，现赠送您暖风扇一台，请添加支付宝好友进行登记领取。",
         help="支持中文文本检测，建议输入50-500字",
     )
-
-# 动态可视化组件
-col1, col2 = st.columns([5, 3])
-
-# progress 状态精确控制进度百分比
-if "progress" not in st.session_state:
-    st.session_state.progress = 0
-if "new_result" not in st.session_state:
-    st.session_state.new_result = False
-
-with col1:
-    # 使用独立容器控制结果显示
-    result_container = st.empty()
-    # 检测结果展示
-    holder = st.empty()
-    eval_bar = holder.progress(0.0, "**😴未开始检测**")
-    if st.button("开始检测", use_container_width=True, type="primary"):
-        if len(input_text) < 10:
-            st.error("⚠️ 输入文本过短，请至少输入10个字符")
-        else:
-            # 重置状态
-            st.session_state.new_result = False
-            st.session_state.progress = 0
-
-            eval_bar.progress(0.0, "**🤯分析中...**")
-            try:
-                # 获取并显示结果
-                with st.spinner("▸▸ 正在生成可视化报告..."):
-                    result = predict_text(input_text)
-                    st.session_state["detection_result"] = result
-                    # 立即清除旧结果
-                    result_container.empty()
-
-                # 模拟进度条（后执行）
-                while st.session_state.progress < 100:
-                    st.session_state.progress += 1
-                    eval_bar.progress(st.session_state.progress, f"**🤯 深度分析中... {st.session_state.progress}%**")
-                    time.sleep(0.03)
-
-                st.session_state["new_result"] = True
-                # 完成时显示
-                eval_bar.progress(100, "**🫡 分析完成！**")
-                time.sleep(0.5)
-                st.toast(":rainbow[结果已就绪！]", icon="🎉")
-
-            finally:
-                st.toast(":rainbow[识别完成！]", icon="🥳")
-
-    # 检测结果展示（确保即使没点按钮，仍可显示之前的结果）
-    if "detection_result" in st.session_state and st.session_state["new_result"]:
-        result = st.session_state["detection_result"]
-        risk_level = result['features']['风险等级']
-        keywords = result['features']['关键词']
-        # 颜色映射配置
-        color_map = {
-            "无风险": "#2ecc71",
-            "低风险": "#f1c40f",
-            "中风险": "#f39c12",
-            "高风险": "#e74c3c"
-        }
-        # 动态生成显示内容
-        keywords_display = '无' if risk_level == "无风险" else ', '.join(keywords) or '无'
-        with result_container.container():
-            st.markdown(
-                f"""
-                <div style="padding:1rem; border-radius:15px; background:{color_map[risk_level]};">
-                    <h2 style="color:white; text-align:center; margin:0;">📊 综合风险评估</h2>
-                    <h2 style="color:white; text-align:center; margin:1rem 0;">{risk_level}</h2>
-                </div>
-            """,
-                unsafe_allow_html=True,
-            )
-
-            st.markdown(
-                f"""
-                ### 🎯 检测结果：{result['prediction']}
-                ### ⚠️ 危险关键词： {keywords_display}
-                """
-            )
+with button_col:
+    if st.button("开始检测", use_container_width=True, type="primary", help="点击进行诈骗信息检测"):
+        visualize_result(input_text, result_area.container())
+        st.session_state.show_result = True
+    state_show = st.empty()
+    if not st.session_state.get("show_result", False):
+        state_show.info("请先输入待检测文本，然后点击「开始检测」按钮。", icon="ℹ️")
+    else:
+        state_show.success("检测完成！请查看下方结果。", icon="✅")
+        st.balloons()
 
 
-with col2:
-    st.markdown("### 📊 实时特征分析")
-    with st.container(border=True):
-        # 初始状态/未检测时的提示
-        if "detection_result" not in st.session_state or not st.session_state["new_result"]:
-            st.info("🕒 等待检测数据...")
-        else:
-            # 动态获取特征数据
-            result = st.session_state["detection_result"]
-            risk_level = result["features"]["风险等级"]
-
-            # 根据风险等级调整语义指标
-            raw_semantic_value = result["features"]["语义异常度"]  # 获取原始值
-            semantic_label = "安全置信度" if risk_level == "无风险" else "语义异常度"
-
-            features = {
-                "关键词风险": result["features"]["关键词风险"],
-                semantic_label: raw_semantic_value,  # 动态标签名
-                "链接风险": result["features"]["链接风险"],
-                "紧迫性指数": result["features"]["紧迫性指数"],
-            }
-
-            # 雷达图数据准备
-            categories = list(features.keys())
-            values = list(features.values())
-
-            # 使雷达图闭合
-            values += [values[0]]
-            categories += [categories[0]]
-
-            # 创建雷达图
-            fig_radar = go.Figure()
-            fig_radar.add_trace(
-                go.Scatterpolar(
-                    r=values,
-                    theta=categories,
-                    fill="toself",
-                    marker=dict(size=8, color="#ff4b4b"),
-                    line=dict(color="#ff4b4b", width=3),
-                    name="特征评分",
-                )
-            )
-            fig_radar.update_layout(
-                polar=dict(
-                    domain=dict(x=[0.1, 0.9], y=[0.1, 0.7]),
-                    radialaxis=dict(range=[0, 100]),
-                ),
-                margin=dict(l=20, r=20, t=15, b=20),
-                height=320
-            )
-            st.plotly_chart(fig_radar, use_container_width=True)
-
-            # 创建仪表盘
-            fig_gauge = go.Figure(
-                go.Indicator(
-                    mode="gauge+number",
-                    value=result["probability"] * 100,
-                    number={"suffix": "%"},
-                    domain={"x": [0, 1], "y": [0, 1]},
-                    title={"text": "置信度仪表盘"},
-                    gauge={
-                        "axis": {"range": [0, 100]},
-                        "bar": {"color": "#ff6b6b"},
-                        "steps": [
-                            {"range": [0, 30], "color": "#63cdda"},
-                            {"range": [30, 70], "color": "#ffeaa7"},
-                            {"range": [70, 100], "color": "#ff6b6b"},
-                        ],
-                        "shape": "angular",
-                    },
-                )
-            )
-            fig_gauge.update_layout(
-                height=200,
-                margin=dict(t=50, b=8)
-            )
-            st.plotly_chart(fig_gauge, use_container_width=True)
-
-
+if not st.session_state.get("show_result", False):
+    with result_area.container():
+        colored_header(
+            label="🔍 风险关键词云图",
+            description="基于诈骗信息数据库的关键词提取",
+            color_name="gray-70",
+        )
+        try:
+            with open("wordcloud.html", "r", encoding="utf-8") as f:
+                html_content = f.read()
+            st.components.v1.html(html_content, height=800)
+        except FileNotFoundError:
+            st.warning("词云文件未找到")
+        except Exception as e:
+            st.error(f"词云加载失败: {str(e)}")
 # ---------------------------
 # 底部信息
 # ---------------------------

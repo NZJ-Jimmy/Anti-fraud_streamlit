@@ -1,3 +1,4 @@
+from scipy.__config__ import show
 import streamlit as st
 import pandas as pd
 import neo4j
@@ -17,7 +18,7 @@ rainbow_div = """
 # ============================
 # 数据库连接配置
 # ============================
-@st.cache_resource
+@st.cache_resource(ttl=120, show_spinner=False)
 def connect_to_neo4j():
     """连接 Neo4j 数据库"""
     uri = st.session_state.neo4j_uri
@@ -81,7 +82,7 @@ st.markdown("""
 st.markdown('<h1 class="main-title">🔍 知识图谱检索</h1>', unsafe_allow_html=True)
 
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=3600, show_spinner=False)
 def search_cases(keyword, skip=0, limit=30):
     """
     根据关键词在 Neo4j 数据库中搜索案件。
@@ -137,7 +138,7 @@ def search_cases(keyword, skip=0, limit=30):
         result = session.run(query_template, keyword=keyword, skip=skip, limit=limit)
         return total_count, pd.DataFrame(result.data())
 
-@st.cache_data(ttl=3600)
+# @st.cache_data(ttl=3600, show_spinner=False)
 def get_cases_names(limit=5):
     """
     随机返回案件名称列表，用于搜索建议。
@@ -231,9 +232,7 @@ else: # 如果没有点击搜索按钮
         cols = st.columns(5)
         for i, case_name in enumerate(cases_names):
             with cols[i % 5]:
-                if st.button(case_name, key=f"case_{i}", use_container_width=True):
-                    # 点击按钮后，显示案件详情
-                    kg.show_case_detail(case_name)
+                st.button(case_name, use_container_width=True, key=f"case_{i}", help="点击查看案件详情", on_click=kg.show_case_detail, args=(case_name,))
     
     # st.markdown(rainbow_div, unsafe_allow_html=True)
     # st.markdown("### 知识图谱可视化：")

@@ -40,7 +40,7 @@ rel_color_map = {
 # ============================
 # 数据库连接配置
 # ============================
-@st.cache_resource
+@st.cache_resource(ttl=120, show_spinner=False)
 def connect_to_neo4j():
     """连接 Neo4j 数据库"""
     uri = st.session_state.neo4j_uri
@@ -183,6 +183,7 @@ def show_net(net, height=500):
         html = f.read()
     st.components.v1.html(html, height=height)
 
+@st.cache_data(ttl=120, show_spinner=False)
 @st.dialog("案件详情", width="large")
 def show_case_detail(case_name):
     cypher_query = """
