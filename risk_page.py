@@ -1,10 +1,50 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from pyecharts import options as opts
-from pyecharts.charts import Map
-from streamlit_echarts import st_pyecharts
-import plotly.graph_objects as go
+
+from openai import OpenAI
+import openai
+
+openai.api_key = st.secrets["OPENAI_API_KEY"]
+openai.base_url = st.secrets["OPENAI_BASE_URL"]
+openai_model = st.secrets["OPENAI_MODEL"]
+
+def get_openai_response(user_profile):
+    profile_str = "\n".join([f"{k}: {v}" for k, v in user_profile.items()])
+    prompt_template = """
+    我这里有一个用户对风险评估问卷填入的信息，以下是信息内容：
+    {profile_str}
+
+    请你根据用户的信息，为用户生成一个风险分析报告，并给予用户实用建议。
+
+    要求：
+    1. 总结用户对风险评估问卷的回答，分析用户的风险特征。
+    2. 对用户的信息先给出具体详细的分析，再给出建议。
+    3. 可以针对用户信息中的内容的部分特征，给出风险用户建议。
+    4. 只需要给出约 200 字的建议即可。建议有条理地列出。
+    5. 适量加入 emoji 表情，使得建议更加生动有趣。
+    6. 不要输出一共写了多少字数。
+    7. 不要输出任何其它的内容，只输出风险分析报告与建议内容。
+
+    风险分析报告与建议内容：
+    """
+    prompt = prompt_template.format(profile_str=profile_str)
+    client = OpenAI()
+
+    response = client.chat.completions.create(
+        model=openai_model,
+        messages=[
+            {
+                "role": "system",
+                "content": "The following is a message that I received from a user and I need your help to respond to it.",
+            },
+            {"role": "user", "content": prompt},
+        ],
+        max_tokens=1024,
+        temperature=1.0,
+        stream=True
+    )
+    return response
 
 def risk_assessment_page():
     # ========== 页面配置 ==========
@@ -120,23 +160,23 @@ def risk_assessment_page():
             "紧急反应": urgency_react,
             "陌生人处理": stranger_request,
             "未验证优惠信息": reward_react,
-            "每日社交使用时长": social_media,
+            "每日社交使用时长(小时)": social_media,
         }
         with st.spinner("🤯 正在评估中..."):
-            # 模拟评估过程
-            import time
-            time.sleep(3)
-
-        st.success("✅ 评估完成！已为您生成风险分析报告🫡")
-
+            try:
+                # 生成风险分析报告
+                response = get_openai_response(user_profile)
+            except Exception as e:
+                st.error(f"❌ 评估失败，请稍后再试。错误信息：{e}")
+                st.stop()
         # print(user_profile["接触诈骗类型"])
-
-        # ========== 高级可视化 ==========
-        # tab1, tab2, tab3 = st.tabs(["📝 风险分析报告", "🛡️ 防御模拟", "📈 趋势分析"])
+        st.success("✅ 评估完成！正在为您生成风险分析报告🫡")
         tab1, tab2 = st.tabs(["📝 风险分析报告", "📊 指标关联分析"])
-        # "🛡️ 防御模拟", "📈 趋势分析",
         with tab1:
-            st.write(user_profile)
+            # st.write(user_profile)
+            st.write_stream(response)
+            st.toast(":rainbow[结果已就绪！]", icon="🎉")
+            st.balloons()
         with tab2:
             c1, c2 = st.columns([1, 2])
             with c1:
