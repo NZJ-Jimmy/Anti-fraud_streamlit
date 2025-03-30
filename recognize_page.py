@@ -153,7 +153,7 @@ with st.sidebar:
 
     with st.expander("⚙️ 高级选项"):
         confidence_threshold = st.slider(
-            "置信度阈值", min_value=0.7, max_value=0.99, value=0.85, step=0.01
+            "置信度阈值", min_value=0.7, max_value=0.99, value=0.9, step=0.01
         )
 
         analysis_depth = st.selectbox("分析深度", ["快速模式", "标准模式", "深度模式"])
@@ -338,12 +338,20 @@ def visualize_result(input_text, result_container):
                         )
                     )
                     fig_radar.update_layout(
+                        title=dict(
+                            text="风险特征雷达图",
+                            x=0.38,
+                            y=0.95,
+                            font=dict(
+                                size=14,
+                            )
+                        ),
                         polar=dict(
                             domain=dict(x=[0.1, 0.9], y=[0.1, 0.7]),
                             radialaxis=dict(range=[0, 100]),
                         ),
                         margin=dict(l=20, r=20, t=15, b=20),
-                        height=200,
+                        height=250,
                     )
                     st.plotly_chart(fig_radar, use_container_width=True)
 

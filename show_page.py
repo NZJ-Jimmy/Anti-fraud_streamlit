@@ -63,6 +63,11 @@ def publish_article():
                 save_data(data)
                 st.success(f"✅文章发布成功！")
 
+        if st.form_submit_button("🔄 刷新数据"):
+            st.cache_data.clear()
+            st.toast("数据已刷新！", icon="🔄")
+            st.rerun()
+
 
 # 文章展示组件
 def display_article(article, idx, is_hot=False):
@@ -90,7 +95,7 @@ def display_article(article, idx, is_hot=False):
 
     # 显示内容摘要
     content = article["content"]
-    preview = (content[:100] + "...") if len(content) > 100 else content
+    preview = (content[:40] + "...") if len(content) > 40 else content
     st.write(preview)
     st.divider()
 
@@ -120,7 +125,7 @@ def show_article_detail(article_id):
     st.markdown(f"<div style='text-align: right; color: #666;'>总阅读量：{len(article['view_timestamps'])}</div>", 
                unsafe_allow_html=True)
 
-# ========== 阅读趋势图（分钟级） ==========
+    # ========== 阅读趋势图（分钟级） ==========
     st.markdown("---")
     st.subheader("📈 阅读趋势")
 
@@ -129,23 +134,23 @@ def show_article_detail(article_id):
         df = pd.DataFrame({
             "timestamp": pd.to_datetime(article["view_timestamps"])
         })
-        
+
         # 按分钟对齐时间戳（向下取整到整分钟）
-        df["minute"] = df["timestamp"].dt.floor('min')
-        
+        df["date"] = df["timestamp"].dt.floor('D')
+
         # 按分钟统计
-        minute_views = df.groupby("minute").size().reset_index(name="阅读量")
+        daily_views = df.groupby("date").size().reset_index(name="阅读量")
 
         # 创建可视化图表
         fig = px.line(
-            minute_views,
-            x="minute",
+            daily_views,
+            x="date",
             y="阅读量",
             markers=True,
             line_shape="spline",
             template="plotly_white",
             color_discrete_sequence=["#00CC96"],  # 使用更醒目的颜色
-            labels={"minute": "时间", "阅读量": "每分钟阅读次数"}
+            labels={"date": "日期", "阅读量": "当日阅读量"},
         )
 
         # 美化图表样式
@@ -155,27 +160,27 @@ def show_article_detail(article_id):
                 showline=True,
                 linecolor="lightgray",
                 title="时间",
-                type='date',  # 确保时间轴正确识别
-                tickformat="%H:%M",  # 只显示小时:分钟
+                type="date",  # 确保时间轴正确识别
+                tickformat="%y-%m-%d",  # 显示月-日格式
                 tickmode="auto",
-                nticks=20,  # 最多显示20个时间刻度
-                tickangle=45
+                nticks=min(14, len(daily_views)),  # 最多显示14个日期刻度
+                tickangle=30,  # 调整角度
             ),
             yaxis=dict(
                 showline=True,
                 linecolor="lightgray",
                 title="阅读次数",
-                rangemode="nonnegative"
+                rangemode="nonnegative",
             ),
             hovermode="x unified",
-            margin=dict(l=40, r=40, t=60, b=40),
-            height=400
+            margin=dict(l=40, r=40, t=60, b=80),
+            height=400,
         )
-        
+
         # 添加峰值标记
-        max_point = minute_views.loc[minute_views['阅读量'].idxmax()]
+        max_point = daily_views.loc[daily_views["阅读量"].idxmax()]
         fig.add_annotation(
-            x=max_point['minute'],
+            x=max_point['date'],
             y=max_point['阅读量'],
             text="峰值",
             showarrow=True,
@@ -195,10 +200,10 @@ def main():
     with st.sidebar:
         st.header("📝 文章管理")
         publish_article()
-        st.markdown("---")
-        if st.button("🔄 刷新数据"):
-            st.cache_data.clear()
-            st.rerun()
+        # st.markdown("---")
+        # if st.button("🔄 刷新数据"):
+        #     st.cache_data.clear()
+        #     st.rerun()
     
     if "selected_article" in st.session_state:
         show_article_detail(st.session_state.selected_article)
@@ -208,34 +213,38 @@ def main():
         # 安全获取文章列表（核心修复）
         articles = data.get("articles", [])  # 添加默认值
         
-        st.header("📰 最新文章")
-        if not articles:
-            st.info("还没有文章，快去发布一篇吧！")
-        else:
-            # 添加排序保护
-            try:
-                sorted_articles = sorted(
-                    articles,
-                    key=lambda x: (-int(x.get("is_top", False)), x.get("publish_time", "")),
-                    reverse=True
-                )[:10]
-            except KeyError as e:
-                st.error(f"数据格式错误：缺少字段 {e}")
-                sorted_articles = articles[:10]
-            
-            for idx, article in enumerate(sorted_articles):
-                display_article(article, idx)
-        
-        st.markdown("---")
-        st.header("🔥 热门文章")
-        if articles:
-            try:
-                hot_articles = sorted(articles,  key=lambda x: len(x.get("view_timestamps", [])), reverse=True)[:3]
-                for idx, article in enumerate(hot_articles):
-                    display_article(article, idx, is_hot=True)  # 传入 is_hot 参数
-            except KeyError:
-                hot_articles = articles[:3]
-                for idx, article in enumerate(hot_articles):
-                    display_article(article, idx + 100)
+        c1, c2 = st.columns([1, 1])
+        with c1:
+            st.header("🔥 热门文章")
+            if articles:
+                try:
+                    hot_articles = sorted(articles,  key=lambda x: len(x.get("view_timestamps", [])), reverse=True)[:3]
+                    for idx, article in enumerate(hot_articles):
+                        display_article(article, idx, is_hot=True)  # 传入 is_hot 参数
+                except KeyError:
+                    hot_articles = articles[:3]
+                    for idx, article in enumerate(hot_articles):
+                        display_article(article, idx + 100)
+            else:
+                st.info("还没有文章，快去发布一篇吧！")
+
+        with c2:
+            st.header("📰 最新文章")
+            if not articles:
+                st.info("还没有文章，快去发布一篇吧！")
+            else:
+                # 添加排序保护
+                try:
+                    sorted_articles = sorted(
+                        articles,
+                        key=lambda x: (-int(x.get("is_top", False)), x.get("publish_time", "")),
+                        reverse=True
+                    )[:10]
+                except KeyError as e:
+                    st.error(f"数据格式错误：缺少字段 {e}")
+                    sorted_articles = articles[:10]
+                
+                for idx, article in enumerate(sorted_articles):
+                    display_article(article, idx)
 
 main()
