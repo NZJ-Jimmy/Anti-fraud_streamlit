@@ -14,7 +14,7 @@ st.session_state.neo4j_password = st.secrets['NEO4J_PASSWORD']
 
 st.logo("logo_name_new.png", size="large", icon_image="logo.png")
 
-start_page = st.Page("start_page.py", title="欢迎", icon="🎉")
+start_page = st.Page("start.py", title="欢迎", icon="🎉")
 bot_page = st.Page('bot.py', title='问答助手', icon='🤖')
 search_page = st.Page('search.py', title='案件搜索', icon='🔍')
 show_page = st.Page('show_page.py', title='展示界面', icon='🎈')
