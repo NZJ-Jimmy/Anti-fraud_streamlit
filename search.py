@@ -42,6 +42,12 @@ def connect_to_neo4j():
 # 自定义CSS样式
 st.markdown("""
 <style>
+    /* 主标题动画 */
+    @keyframes titleAnimation {
+        0% { transform: translateY(-20px); opacity: 0; }
+        100% { transform: translateY(0); opacity: 1; }
+    }
+    
     /* 主标题 */
     .main-title {
         color: #2E86C1;
@@ -49,6 +55,7 @@ st.markdown("""
         text-align: center;
         padding: 20px;
         border-bottom: 3px solid #2E86C1;
+        animation: titleAnimation 0.5s ease-out;
     }
     
     /* 搜索框美化 */
@@ -227,19 +234,21 @@ else: # 如果没有点击搜索按钮
     
     # 显示随机推荐的案例名称，以小按钮的形式
     # st.markdown("### 智能推荐案件：")
-    with st.spinner("载入推荐案件..."):
-        cases_names = get_cases_names()
-        cols = st.columns(5)
-        for i, case_name in enumerate(cases_names):
-            with cols[i % 5]:
-                st.button(case_name, use_container_width=True, key=f"case_{i}", help="点击查看案件详情", on_click=kg.show_case_detail, args=(case_name,))
+    with st.expander("智能推荐案件", expanded=True, icon="📖"):
+        with st.spinner("载入推荐案件..."):
+            cases_names = get_cases_names(limit=4)
+            cols = st.columns(2)
+            for i, case_name in enumerate(cases_names):
+                with cols[i % 2]:
+                    st.button(case_name, use_container_width=True, key=f"case_{i}", help="点击查看案件详情", on_click=kg.show_case_detail, args=(case_name,))
     
     # st.markdown(rainbow_div, unsafe_allow_html=True)
     # st.markdown("### 知识图谱可视化：")
-    with st.spinner("载入知识图谱..."):
-        net = kg.init_net()
-        with st.empty():
-            for case_name in cases_names:
-                net = kg.visualize_case_network(case_name, net)
-                kg.show_net(net, height=500)
+    with st.expander("知识图谱可视化案件", expanded=True, icon="🕵️"):
+        with st.spinner("载入知识图谱..."):
+            net = kg.init_net()
+            with st.empty():
+                for case_name in cases_names:
+                    net = kg.visualize_case_network(case_name, net)
+                    kg.show_net(net, height=800)
 

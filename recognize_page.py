@@ -179,14 +179,14 @@ st.markdown(
         100% { transform: translateY(0); opacity: 1; }
     }
     
+    /* 主标题 */
     .main-title {
-        animation: titleAnimation 1s ease-out;
-        font-size: 2.8rem;
+        color: #E57373;
+        font-size: 2.5em;
         text-align: center;
-        background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin: 2rem 0;
+        padding: 20px;
+        border-bottom: 3px solid #E57373;
+        animation: titleAnimation 0.5s ease-out;
     }
     
     /* 输入框美化 */
@@ -276,7 +276,7 @@ def visualize_result(input_text, result_container):
                 # 可视化结果
                 colored_header(
                     label="🎯 识别结果",
-                    description="基于 DeepSeek 微调的文本分类引擎 🚀",
+                    description="基于 **华为 NEZHA 模型** 微调的文本分类引擎 🚀",
                     color_name="gray-70",
                 )
                     
@@ -384,14 +384,15 @@ def visualize_result(input_text, result_container):
             # 结果分析
             colored_header(
                 label="💡 建议与防护",
-                description="🔍 基于 DeepSeek 大模型的建议生成",
+                description="🔍 基于 **DeepSeek 大模型**的建议生成",
                 color_name="gray-70",
             )
             
             with st.spinner("▸▸ 正在生成建议..."):
                 try:
                     suggestions_stream = get_suggestions_stream(input_text, result['features']['风险等级'])
-                    st.write_stream(suggestions_stream)
+                    with st.expander("DeepSeek 建议", expanded=True, icon='🚀'):
+                        st.write_stream(suggestions_stream)
                     st.toast(":rainbow[建议已生成！]", icon="🎉")
                 except Exception as e:
                     st.error(f"⚠️ 发生错误: {str(e)}")

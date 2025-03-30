@@ -324,7 +324,7 @@ def risk_assessment_page():
                     fig = px.parallel_coordinates(
                         parallel_df,
                         color="风险值",
-                        color_continuous_scale=px.colors.diverging.Tealrose,
+                        # color_continuous_scale=px.colors.diverging.Tealrose,
                         labels={
                             "年龄": "Age",
                             "收入等级": "Income Level",
@@ -342,10 +342,10 @@ def risk_assessment_page():
                         font=dict(size=13),
                         xaxis=dict(
                             tickangle=45,
-                            tickfont=dict(size=10, color="black"),  # 设置刻度颜色为黑色
+                            # tickfont=dict(size=10, color="black"),  # 设置刻度颜色为黑色
                         ),
                         yaxis=dict(
-                            tickfont=dict(size=10, color="black")  # 设置刻度颜色为黑色
+                            # tickfont=dict(size=10, color="black")  # 设置刻度颜色为黑色
                         ),
                     )
 

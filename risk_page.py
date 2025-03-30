@@ -5,9 +5,80 @@ import plotly.express as px
 from openai import OpenAI
 import openai
 
-openai.api_key = st.secrets["OPENAI_API_KEY"]
-openai.base_url = st.secrets["OPENAI_BASE_URL"]
-openai_model = st.secrets["OPENAI_MODEL"]
+st.markdown(
+    """
+<style>
+    /* 主标题动画 */
+    @keyframes titleAnimation {
+        0% { transform: translateY(-20px); opacity: 0; }
+        100% { transform: translateY(0); opacity: 1; }
+    }
+    
+    /* 主标题 */
+    .main-title {
+        color: #F1C40F;
+        font-size: 2.5em;
+        text-align: center;
+        padding: 20px;
+        border-bottom: 3px solid #F1C40F;
+        animation: titleAnimation 0.5s ease-out;
+    }
+    
+    /* 输入框美化 */
+    .stTextInput>div>div>input {
+        border-radius: 15px;
+        padding: 1.2rem;
+        box-shadow: 0 2px 6px rgba(255,223,107,0.2);
+    }
+    
+    /* 动态结果卡片 */
+    .result-card {
+        border-radius: 20px;
+        padding: 2rem;
+        margin: 1.5rem 0;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    
+    /* 诈骗结果样式 */
+    .fraud-result {
+        background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+        color: white;
+    }
+    
+    /* 正常结果样式 */
+    .normal-result {
+        background: linear-gradient(135deg, #63cdda, #77ecb9);
+        color: white;
+    }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+with st.sidebar:
+    with st.expander("配置 OpenAI API Key"):
+        use_custom_openai = st.checkbox('自定义 OpenAI 连接配置')
+        
+        if use_custom_openai:
+            st.session_state.openai_api_key = st.text_input('OpenAI API Key', type='password')
+            st.session_state.openai_model = st.text_input('OpenAI Model')
+            st.session_state.openai_base_url = st.text_input('OpenAI Base URL')
+        else:
+            st.session_state.openai_api_key = st.secrets['OPENAI_API_KEY']
+            st.session_state.openai_model = st.secrets['OPENAI_MODEL']
+            st.session_state.openai_base_url = st.secrets['OPENAI_BASE_URL']
+        
+        if st.button('检查 API Key 可用性'):
+            import openai
+            with st.spinner('正在验证...'):
+                try:
+                    openai.base_url = st.session_state.openai_base_url
+                    openai.api_key = st.session_state.openai_api_key
+                    openai.models.retrieve(st.session_state.openai_model)
+                    st.success('API Key 验证成功', icon='✅')
+                except Exception as e:
+                    st.error(e, icon='❌')
 
 def get_openai_response(user_profile):
     profile_str = "\n".join([f"{k}: {v}" for k, v in user_profile.items()])
@@ -32,7 +103,7 @@ def get_openai_response(user_profile):
     client = OpenAI()
 
     response = client.chat.completions.create(
-        model=openai_model,
+        model=st.session_state.openai_model,
         messages=[
             {
                 "role": "system",
@@ -49,7 +120,7 @@ def get_openai_response(user_profile):
 def risk_assessment_page():
     # ========== 页面配置 ==========
     # ========== 核心功能布局 ==========
-    st.title("🛡️ 智能反诈风险评估")
+    st.markdown("<h1 class='main-title'>⚠️ 反诈风险评估系统</h1>",unsafe_allow_html=True)
 
     # ========== 核心功能布局 ==========
     with st.form("main_form"):

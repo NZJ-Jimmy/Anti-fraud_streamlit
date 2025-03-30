@@ -14,6 +14,7 @@ import torch
 
 lb = LabelEncoder()
 lb.classes_ = classes
+# Use Huawei Nezha model
 tokenizer = BertTokenizer.from_pretrained('bert-base-chinese')
 
 def encode_texts(texts):
@@ -25,6 +26,7 @@ def encode_texts(texts):
         return_tensors='pt',
     )
 
+# Use Huawei Nezha model
 model = BertForSequenceClassification.from_pretrained('bert-base-chinese', num_labels=len(classes)).to(device)
 model.load_state_dict(torch.load(r"model/final_model.pth"))
 if torch.cuda.is_available():

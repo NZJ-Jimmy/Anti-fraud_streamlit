@@ -9,6 +9,59 @@ EXAMPLE_QUESTIONS = [
     "涉嫌团伙作案的案件有哪些？"
 ]
 
+st.markdown(
+    """
+<style>
+    /* 主标题动画 */
+    @keyframes titleAnimation {
+        0% { transform: translateY(-20px); opacity: 0; }
+        100% { transform: translateY(0); opacity: 1; }
+    }
+    
+    /* 主标题 */
+    .main-title {
+        color: #2E86C1;
+        font-size: 2.5em;
+        text-align: center;
+        padding: 20px;
+        border-bottom: 3px solid #2E86C1;
+        animation: titleAnimation 0.5s ease-out;
+    }
+    
+    /* 输入框美化 */
+    .stTextInput>div>div>input {
+        border-radius: 15px;
+        padding: 1.2rem;
+        box-shadow: 0 2px 6px rgba(255,107,107,0.2);
+    }
+    
+    /* 动态结果卡片 */
+    .result-card {
+        border-radius: 20px;
+        padding: 2rem;
+        margin: 1.5rem 0;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    
+    /* 诈骗结果样式 */
+    .fraud-result {
+        background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+        color: white;
+    }
+    
+    /* 正常结果样式 */
+    .normal-result {
+        background: linear-gradient(135deg, #63cdda, #77ecb9);
+        color: white;
+    }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+st.markdown('<h1 class="main-title">🤖 反诈知识问答助手</h1>', unsafe_allow_html=True)
+
 # Page Config
 with st.sidebar:
     with st.expander("配置 OpenAI API Key"):
@@ -67,7 +120,7 @@ cols = st.columns(2)  # 创建两列来排列按钮
 asked_example = None  # 用于存储用户选择的示例问题
 for i, question in enumerate(EXAMPLE_QUESTIONS):
     with cols[i % 2]:  # 交替分配到两列
-        if st.button(question, key=f"example_{i}"):
+        if st.button(question, key=f"example_{i}",use_container_width=True):
             # 直接处理问题提交
             # write_message('user', question)
             # handle_submit(question)
