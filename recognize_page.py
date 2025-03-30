@@ -4,6 +4,8 @@ import plotly.express as px
 from streamlit_extras.colored_header import colored_header
 import plotly.graph_objects as go
 import numpy as np
+import plotly.express as px
+import pandas as pd
 
 from collections import Counter
 import json
@@ -432,19 +434,58 @@ with button_col:
 
 if not st.session_state.get("show_result", False):
     with result_area.container():
-        colored_header(
-            label="🔍 风险关键词云图",
-            description="基于诈骗信息数据库的关键词提取",
-            color_name="gray-70",
-        )
-        try:
-            with open("wordcloud.html", "r", encoding="utf-8") as f:
-                html_content = f.read()
-            st.components.v1.html(html_content, height=800)
-        except FileNotFoundError:
-            st.warning("词云文件未找到")
-        except Exception as e:
-            st.error(f"词云加载失败: {str(e)}")
+        col1, col2 = st.columns([1, 1], gap="large")
+        with col1: # 词云图
+            colored_header(
+                label="🔍 风险关键词云图",
+                description="✨ 基于诈骗信息数据库的关键词提取生成词云图",
+                color_name="gray-70",
+            )
+            try:
+                with open("wordcloud.html", "r", encoding="utf-8") as f:
+                    html_content = f.read()
+                st.components.v1.html(html_content, height=800)
+            except FileNotFoundError:
+                st.warning("词云文件未找到")
+            except Exception as e:
+                st.error(f"词云加载失败: {str(e)}")
+                
+        with col2: # 词频直方图
+            colored_header(
+                label="📊 风险关键词直方图 ",
+                description="🔑 基于诈骗信息数据库的关键词提取",
+                color_name="gray-70",
+            )
+            try:
+                with open("fraud_keywords.json", "r", encoding="utf-8") as f:
+                    words = json.load(f)
+
+                    # 将词频数据转换为 DataFrame
+                    word_freq_df = pd.DataFrame(words, columns=["Word", "Frequency"])
+
+                    # 使用 plotly 生成更美观的直方图
+                    fig = px.bar(
+                        word_freq_df,
+                        x="Word",
+                        y="Frequency",
+                        text="Frequency",
+                        color="Frequency",
+                        color_continuous_scale="Viridis",
+                        labels={"Word": "关键词", "Frequency": "频率"}
+                    )
+
+                    # 设置图表样式
+                    fig.update_traces(
+                        texttemplate='%{text:.2s}', 
+                        textposition='outside',
+                        marker_line_color='rgb(8,48,107)',
+                        marker_line_width=1.5
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+            except FileNotFoundError:
+                st.warning("词频文件未找到")
+            except Exception as e:
+                st.error(f"直方图加载失败: {str(e)}")
 # ---------------------------
 # 底部信息
 # ---------------------------
