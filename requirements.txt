@@ -11,8 +11,6 @@ pyvis
 pandas
 filelock
 streamlit_extras
-wordcloud
-matplotlib
 torch
 jieba
 scikit-learn

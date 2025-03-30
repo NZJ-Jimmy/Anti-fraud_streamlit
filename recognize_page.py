@@ -1,13 +1,7 @@
-from unittest import result
-from requests import session
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 from streamlit_extras.colored_header import colored_header
-from streamlit_extras.stylable_container import stylable_container
-from sympy import use
-from wordcloud import WordCloud
-import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import numpy as np
 
@@ -39,9 +33,6 @@ with st.sidebar:
                     st.success('API Key 验证成功', icon='✅')
                 except Exception as e:
                     st.error(e, icon='❌')
-
-plt.rcParams["font.sans-serif"] = ["SimHei"]  # 用来正常显示中文标签
-plt.rcParams["axes.unicode_minus"] = False  # 用来正常显示负号
 
 with st.spinner("正在加载模型..."):
     with open("fraud_keywords.json", "r", encoding="utf-8") as f:
