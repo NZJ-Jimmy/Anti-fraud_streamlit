@@ -4,8 +4,7 @@ classes = ['冒充公检法及政府机关类', '冒充军警购物类诈骗', '
 # test_text = "您好，抖音上发现有人提供替考驾驶证服务，每科仅需1400元，微信号为wei1in12345，如有需要请联系，我们保证快速通过考试。"
 
 import torch
-if torch.cuda.is_available():
-    device = torch.device("cuda")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # %%
 from sklearn.preprocessing import LabelEncoder
