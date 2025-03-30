@@ -17,3 +17,5 @@ torch
 jieba
 scikit-learn
 transformers
+pyecharts
+streamlit_echarts
