@@ -48,12 +48,12 @@ def get_openai_response(user_profile):
 
 def risk_assessment_page():
     # ========== 页面配置 ==========
-    st.set_page_config(
-        page_title="智能反诈风险评估系统",
-        layout="wide",
-        page_icon="🛡️",
-        initial_sidebar_state="expanded"
-    )
+    # st.set_page_config(
+    #     page_title="智能反诈风险评估系统",
+    #     layout="wide",
+    #     page_icon="🛡️",
+    #     initial_sidebar_state="expanded"
+    # )
 
     # ========== 核心功能布局 ==========
     st.title("🛡️ 智能反诈风险评估")

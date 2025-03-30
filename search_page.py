@@ -29,12 +29,12 @@ def connect_to_neo4j():
 # ============================
 # 界面美化配置（添加在文件开头）
 # ============================
-st.set_page_config(
-    page_title="智能反诈案件分析系统",
-    page_icon="🕵️",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+# st.set_page_config(
+#     page_title="智能反诈案件分析系统",
+#     page_icon="🕵️",
+#     layout="wide",
+#     initial_sidebar_state="expanded"
+# )
 
 # 自定义CSS样式
 st.markdown("""
