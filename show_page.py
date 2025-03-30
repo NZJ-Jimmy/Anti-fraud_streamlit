@@ -63,6 +63,11 @@ def publish_article():
                 save_data(data)
                 st.success(f"✅文章发布成功！")
 
+        if st.form_submit_button("🔄 刷新数据"):
+            st.cache_data.clear()
+            st.toast("数据已刷新！", icon="🔄")
+            st.rerun()
+
 
 # 文章展示组件
 def display_article(article, idx, is_hot=False):
@@ -90,7 +95,7 @@ def display_article(article, idx, is_hot=False):
 
     # 显示内容摘要
     content = article["content"]
-    preview = (content[:20] + "...") if len(content) > 20 else content
+    preview = (content[:40] + "...") if len(content) > 40 else content
     st.write(preview)
     st.divider()
 
@@ -195,10 +200,10 @@ def main():
     with st.sidebar:
         st.header("📝 文章管理")
         publish_article()
-        st.markdown("---")
-        if st.button("🔄 刷新数据"):
-            st.cache_data.clear()
-            st.rerun()
+        # st.markdown("---")
+        # if st.button("🔄 刷新数据"):
+        #     st.cache_data.clear()
+        #     st.rerun()
     
     if "selected_article" in st.session_state:
         show_article_detail(st.session_state.selected_article)
@@ -208,34 +213,38 @@ def main():
         # 安全获取文章列表（核心修复）
         articles = data.get("articles", [])  # 添加默认值
         
-        st.header("📰 最新文章")
-        if not articles:
-            st.info("还没有文章，快去发布一篇吧！")
-        else:
-            # 添加排序保护
-            try:
-                sorted_articles = sorted(
-                    articles,
-                    key=lambda x: (-int(x.get("is_top", False)), x.get("publish_time", "")),
-                    reverse=True
-                )[:10]
-            except KeyError as e:
-                st.error(f"数据格式错误：缺少字段 {e}")
-                sorted_articles = articles[:10]
-            
-            for idx, article in enumerate(sorted_articles):
-                display_article(article, idx)
-        
-        # st.markdown("---")
-        st.header("🔥 热门文章")
-        if articles:
-            try:
-                hot_articles = sorted(articles,  key=lambda x: len(x.get("view_timestamps", [])), reverse=True)[:3]
-                for idx, article in enumerate(hot_articles):
-                    display_article(article, idx, is_hot=True)  # 传入 is_hot 参数
-            except KeyError:
-                hot_articles = articles[:3]
-                for idx, article in enumerate(hot_articles):
-                    display_article(article, idx + 100)
+        c1, c2 = st.columns([1, 1])
+        with c1:
+            st.header("🔥 热门文章")
+            if articles:
+                try:
+                    hot_articles = sorted(articles,  key=lambda x: len(x.get("view_timestamps", [])), reverse=True)[:3]
+                    for idx, article in enumerate(hot_articles):
+                        display_article(article, idx, is_hot=True)  # 传入 is_hot 参数
+                except KeyError:
+                    hot_articles = articles[:3]
+                    for idx, article in enumerate(hot_articles):
+                        display_article(article, idx + 100)
+            else:
+                st.info("还没有文章，快去发布一篇吧！")
+
+        with c2:
+            st.header("📰 最新文章")
+            if not articles:
+                st.info("还没有文章，快去发布一篇吧！")
+            else:
+                # 添加排序保护
+                try:
+                    sorted_articles = sorted(
+                        articles,
+                        key=lambda x: (-int(x.get("is_top", False)), x.get("publish_time", "")),
+                        reverse=True
+                    )[:10]
+                except KeyError as e:
+                    st.error(f"数据格式错误：缺少字段 {e}")
+                    sorted_articles = articles[:10]
+                
+                for idx, article in enumerate(sorted_articles):
+                    display_article(article, idx)
 
 main()
