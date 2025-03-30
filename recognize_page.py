@@ -17,8 +17,8 @@ from openai import OpenAI
 import openai
 
 with st.sidebar:
-    with st.expander("配置 OpenAI API Key"):
-        use_custom_openai = st.checkbox('自定义 OpenAI 连接配置')
+    with st.expander("配置 DeepSeek API Key"):
+        use_custom_openai = st.checkbox('自定义 DeepSeek 连接配置')
         
         if use_custom_openai:
             st.session_state.openai_api_key = st.text_input('OpenAI API Key', type='password')

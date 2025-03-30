@@ -7,12 +7,7 @@ import plotly.express as px
 import time
 import kg
 
-# 彩虹色横线
-rainbow_div = """
-<div style="height: 5px; background: linear-gradient(90deg, 
-    #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3); 
-    margin: 10px 0; border-radius: 2px;"></div>
-"""
+
 
 
 # ============================
@@ -32,12 +27,6 @@ def connect_to_neo4j():
 # ============================
 # 界面美化配置（添加在文件开头）
 # ============================
-# st.set_page_config(
-#     page_title="智能反诈案件分析系统",
-#     page_icon="🕵️",
-#     layout="wide",
-#     initial_sidebar_state="expanded"
-# )
 
 # 自定义CSS样式
 st.markdown("""
@@ -84,7 +73,12 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-
+# 彩虹色横线
+rainbow_div = """
+<div style="height: 5px; background: linear-gradient(90deg, 
+    #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3); 
+    margin: 10px 0; border-radius: 2px;"></div>
+"""
 # 标题
 st.markdown('<h1 class="main-title">🔍 知识图谱检索</h1>', unsafe_allow_html=True)
 
@@ -169,10 +163,39 @@ def get_cases_names(limit=5):
         result = session.run(query_template, limit=limit)
         return result.value()
 
+# ============================
+# 界面布局配置
+# ============================
+with st.sidebar:
+    with st.expander("连接 Neo4j 数据库"):
+        use_custom_neo4j = st.checkbox('自定义 Neo4j 连接配置')
 
-# 在搜索输入框下方添加筛选条件侧边栏
+        if use_custom_neo4j:
+            st.session_state.neo4j_uri = st.text_input('Neo4j URL')
+            st.session_state.neo4j_username = st.text_input('Neo4j 用户名')
+            st.session_state.neo4j_database = st.text_input('Neo4j 数据库')
+            st.session_state.neo4j_password = st.text_input('Neo4j 密码', type='password')
+        else:
+            st.session_state.neo4j_uri = st.secrets['NEO4J_URI']
+            st.session_state.neo4j_username = st.secrets['NEO4J_USERNAME']
+            st.session_state.neo4j_database = st.secrets['NEO4J_DATABASE']
+            st.session_state.neo4j_password = st.secrets['NEO4J_PASSWORD']
 
-
+        if st.button('检查连接可用性'):
+            from neo4j import GraphDatabase
+            with st.spinner('正在连接...'):
+                try:
+                    with GraphDatabase.driver(
+                        uri=st.session_state.neo4j_uri, 
+                        auth=(st.session_state.neo4j_username, 
+                            st.session_state.neo4j_password),
+                        database=st.session_state.neo4j_database
+                        ) as driver:
+                            driver.verify_connectivity()
+                            st.success('连接成功', icon='✅')
+                except Exception as e:
+                    st.error(e, icon='❌')
+                    
 # 搜索输入框
 keyword = st.text_input("请输入关键词进行搜索：", "")
 
