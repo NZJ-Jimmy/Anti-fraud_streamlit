@@ -21,6 +21,6 @@ show_page = st.Page('show_page.py', title='展示界面', icon='🎈')
 risk_page = st.Page('risk_page.py', title='风险界面', icon='⚠️')
 recognize_page = st.Page('recognize_page.py', title='短信识别', icon='📩')
 
-pages = [start_page, start_page, bot_page, search_page, show_page, risk_page, recognize_page]
+pages = [start_page, bot_page, search_page, show_page, risk_page, recognize_page]
 pg = st.navigation(pages)
 pg.run()
