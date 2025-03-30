@@ -35,7 +35,7 @@ if not os.path.exists(r"model/final_model.pth"):
     os.makedirs("model", exist_ok=True)
     with open("model/final_model.pth", "wb") as f:
         f.write(response.content)
-model.load_state_dict(torch.load(r"model/final_model.pth"))
+model.load_state_dict(torch.load(r"model/final_model.pth", map_location=device))
 if torch.cuda.is_available():
     model = model.cuda()
 

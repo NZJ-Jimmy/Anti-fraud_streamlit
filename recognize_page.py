@@ -45,7 +45,6 @@ with st.spinner("正在加载模型..."):
     import torch
     import jieba
     import fraud_msg_cls
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # ---------------------------
 # 页面配置
