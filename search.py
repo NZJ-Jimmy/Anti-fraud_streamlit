@@ -272,6 +272,9 @@ else: # 如果没有点击搜索按钮
             net = kg.init_net()
             with st.empty():
                 for case_name in cases_names:
-                    net = kg.visualize_case_network(case_name, net)
-                    kg.show_net(net, height=800)
-
+                    try:
+                        net = kg.visualize_case_network(case_name, net)
+                        kg.show_net(net, height=800)
+                    except Exception as e:
+                        st.toast(f"加载案件 {case_name} 时发生错误: {e}", icon="❌")
+                st.toast("知识图谱加载完成！", icon="🥳")
