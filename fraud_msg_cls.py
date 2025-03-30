@@ -27,6 +27,14 @@ def encode_texts(texts):
 
 # Use Huawei Nezha model
 model = BertForSequenceClassification.from_pretrained('bert-base-chinese', num_labels=len(classes)).to(device)
+import os
+if not os.path.exists(r"model/final_model.pth"):
+    import requests
+    url = "https://dlink.host/1drv/aHR0cHM6Ly8xZHJ2Lm1zL3UvYy82YWE4YmQ4MzYxZWQ0NTkwL0VYT1F5WktPTnJSUG1vdENncVVodVI4QjZ4MV9uMjVfMDhFTGdlOHNURF9Fcnc_ZT05ZXB4WE4.pth"
+    response = requests.get(url)
+    os.makedirs("model", exist_ok=True)
+    with open("model/final_model.pth", "wb") as f:
+        f.write(response.content)
 model.load_state_dict(torch.load(r"model/final_model.pth"))
 if torch.cuda.is_available():
     model = model.cuda()
