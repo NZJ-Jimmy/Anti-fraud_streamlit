@@ -17,3 +17,6 @@ scikit-learn
 transformers
 pyecharts
 streamlit_echarts
+jieba
+nbformat
+numpy
