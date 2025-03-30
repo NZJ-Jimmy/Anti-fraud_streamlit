@@ -92,6 +92,7 @@ def display_article(article, idx, is_hot=False):
         button_key = f"read_{idx}_{article['id']}"
         if st.button("阅读全文", key=button_key):
             st.session_state.selected_article = article["id"]
+            st.rerun()
 
     # 显示内容摘要
     content = article["content"]
