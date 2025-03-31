@@ -167,7 +167,7 @@ def get_cases_names(limit=5):
 # 界面布局配置
 # ============================
 with st.sidebar:
-    with st.expander("📌 操作说明"):
+    with st.expander("📌 操作说明", expanded=True):
         st.markdown(
         """
         1. **📖 智能推荐案件**：随机推荐相关案件，点击可查看详情。
@@ -177,35 +177,35 @@ with st.sidebar:
         5. **🌐 知识图谱可视化**：展示案件的知识图谱，点击可查看详细信息。
         """
         )
-        
-    with st.expander("连接 Neo4j 数据库"):
-        use_custom_neo4j = st.checkbox('自定义 Neo4j 连接配置')
+    with st.expander("⚙️ 高级选项"):
+        with st.expander("连接 Neo4j 数据库"):
+            use_custom_neo4j = st.checkbox('自定义 Neo4j 连接配置')
 
-        if use_custom_neo4j:
-            st.session_state.neo4j_uri = st.text_input('Neo4j URL')
-            st.session_state.neo4j_username = st.text_input('Neo4j 用户名')
-            st.session_state.neo4j_database = st.text_input('Neo4j 数据库')
-            st.session_state.neo4j_password = st.text_input('Neo4j 密码', type='password')
-        else:
-            st.session_state.neo4j_uri = st.secrets['NEO4J_URI']
-            st.session_state.neo4j_username = st.secrets['NEO4J_USERNAME']
-            st.session_state.neo4j_database = st.secrets['NEO4J_DATABASE']
-            st.session_state.neo4j_password = st.secrets['NEO4J_PASSWORD']
+            if use_custom_neo4j:
+                st.session_state.neo4j_uri = st.text_input('Neo4j URL')
+                st.session_state.neo4j_username = st.text_input('Neo4j 用户名')
+                st.session_state.neo4j_database = st.text_input('Neo4j 数据库')
+                st.session_state.neo4j_password = st.text_input('Neo4j 密码', type='password')
+            else:
+                st.session_state.neo4j_uri = st.secrets['NEO4J_URI']
+                st.session_state.neo4j_username = st.secrets['NEO4J_USERNAME']
+                st.session_state.neo4j_database = st.secrets['NEO4J_DATABASE']
+                st.session_state.neo4j_password = st.secrets['NEO4J_PASSWORD']
 
-        if st.button('检查连接可用性'):
-            from neo4j import GraphDatabase
-            with st.spinner('正在连接...'):
-                try:
-                    with GraphDatabase.driver(
-                        uri=st.session_state.neo4j_uri, 
-                        auth=(st.session_state.neo4j_username, 
-                            st.session_state.neo4j_password),
-                        database=st.session_state.neo4j_database
-                        ) as driver:
-                            driver.verify_connectivity()
-                            st.success('连接成功', icon='✅')
-                except Exception as e:
-                    st.error(e, icon='❌')
+            if st.button('检查连接可用性'):
+                from neo4j import GraphDatabase
+                with st.spinner('正在连接...'):
+                    try:
+                        with GraphDatabase.driver(
+                            uri=st.session_state.neo4j_uri, 
+                            auth=(st.session_state.neo4j_username, 
+                                st.session_state.neo4j_password),
+                            database=st.session_state.neo4j_database
+                            ) as driver:
+                                driver.verify_connectivity()
+                                st.success('连接成功', icon='✅')
+                    except Exception as e:
+                        st.error(e, icon='❌')
                     
 # 搜索输入框
 keyword = st.text_input("请输入关键词进行搜索：", "")

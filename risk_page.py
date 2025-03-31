@@ -57,7 +57,7 @@ st.markdown(
 )
 
 with st.sidebar:
-    with st.expander("📌 操作说明"):
+    with st.expander("📌 操作说明", expanded=True):
         st.markdown(
         """
         1. **⚠️ 风险评估系统**：根据用户填写的问卷信息，生成个性化的风险分析报告和建议。
@@ -65,29 +65,29 @@ with st.sidebar:
         3. **📈 指标关联分析**：展示用户信息与风险值之间的关联热力图和路径分析图。
         """
         )
-        
-    with st.expander("配置 DeepSeek API Key"):
-        use_custom_openai = st.checkbox('自定义 DeepSeek 连接配置')
-        
-        if use_custom_openai:
-            st.session_state.openai_api_key = st.text_input('OpenAI API Key', type='password')
-            st.session_state.openai_model = st.text_input('OpenAI Model')
-            st.session_state.openai_base_url = st.text_input('OpenAI Base URL')
-        else:
-            st.session_state.openai_api_key = st.secrets['OPENAI_API_KEY']
-            st.session_state.openai_model = st.secrets['OPENAI_MODEL']
-            st.session_state.openai_base_url = st.secrets['OPENAI_BASE_URL']
-        
-        if st.button('检查 API Key 可用性'):
-            import openai
-            with st.spinner('正在验证...'):
-                try:
-                    openai.base_url = st.session_state.openai_base_url
-                    openai.api_key = st.session_state.openai_api_key
-                    openai.models.retrieve(st.session_state.openai_model)
-                    st.success('API Key 验证成功', icon='✅')
-                except Exception as e:
-                    st.error(e, icon='❌')
+    with st.expander("⚙️ 高级选项"):
+        with st.expander("配置 DeepSeek API Key"):
+            use_custom_openai = st.checkbox('自定义 DeepSeek 连接配置')
+            
+            if use_custom_openai:
+                st.session_state.openai_api_key = st.text_input('OpenAI API Key', type='password')
+                st.session_state.openai_model = st.text_input('OpenAI Model')
+                st.session_state.openai_base_url = st.text_input('OpenAI Base URL')
+            else:
+                st.session_state.openai_api_key = st.secrets['OPENAI_API_KEY']
+                st.session_state.openai_model = st.secrets['OPENAI_MODEL']
+                st.session_state.openai_base_url = st.secrets['OPENAI_BASE_URL']
+            
+            if st.button('检查 API Key 可用性'):
+                import openai
+                with st.spinner('正在验证...'):
+                    try:
+                        openai.base_url = st.session_state.openai_base_url
+                        openai.api_key = st.session_state.openai_api_key
+                        openai.models.retrieve(st.session_state.openai_model)
+                        st.success('API Key 验证成功', icon='✅')
+                    except Exception as e:
+                        st.error(e, icon='❌')
 
 def get_openai_response(user_profile):
     profile_str = "\n".join([f"{k}: {v}" for k, v in user_profile.items()])

@@ -13,29 +13,47 @@ from openai import OpenAI
 import openai
 
 with st.sidebar:
-    with st.expander("配置 DeepSeek API Key"):
-        use_custom_openai = st.checkbox('自定义 DeepSeek 连接配置')
-        
-        if use_custom_openai:
-            st.session_state.openai_api_key = st.text_input('OpenAI API Key', type='password')
-            st.session_state.openai_model = st.text_input('OpenAI Model')
-            st.session_state.openai_base_url = st.text_input('OpenAI Base URL')
-        else:
-            st.session_state.openai_api_key = st.secrets['OPENAI_API_KEY']
-            st.session_state.openai_model = st.secrets['OPENAI_MODEL']
-            st.session_state.openai_base_url = st.secrets['OPENAI_BASE_URL']
-        
-        if st.button('检查 API Key 可用性'):
-            import openai
-            with st.spinner('正在验证...'):
-                try:
-                    openai.base_url = st.session_state.openai_base_url
-                    openai.api_key = st.session_state.openai_api_key
-                    openai.models.retrieve(st.session_state.openai_model)
-                    st.success('API Key 验证成功', icon='✅')
-                except Exception as e:
-                    st.error(e, icon='❌')
 
+    with st.expander("📌 操作说明", expanded=True):
+        st.markdown(
+            """
+        1. 在文本框中输入待检测内容
+        2. 点击「开始检测」按钮
+        3. 查看下方分析结果
+        4. 使用下方工具进行深度分析
+        """
+        )
+
+    with st.expander("⚙️ 高级选项"):
+        confidence_threshold = st.slider(
+            "置信度阈值", min_value=0.7, max_value=0.99, value=0.9, step=0.01
+        )
+
+        analysis_depth = st.selectbox("分析深度", ["快速模式", "标准模式", "深度模式"])
+    
+        with st.expander("配置 DeepSeek API Key"):
+            use_custom_openai = st.checkbox('自定义 DeepSeek 连接配置')
+            
+            if use_custom_openai:
+                st.session_state.openai_api_key = st.text_input('OpenAI API Key', type='password')
+                st.session_state.openai_model = st.text_input('OpenAI Model')
+                st.session_state.openai_base_url = st.text_input('OpenAI Base URL')
+            else:
+                st.session_state.openai_api_key = st.secrets['OPENAI_API_KEY']
+                st.session_state.openai_model = st.secrets['OPENAI_MODEL']
+                st.session_state.openai_base_url = st.secrets['OPENAI_BASE_URL']
+            
+            if st.button('检查 API Key 可用性'):
+                import openai
+                with st.spinner('正在验证...'):
+                    try:
+                        openai.base_url = st.session_state.openai_base_url
+                        openai.api_key = st.session_state.openai_api_key
+                        openai.models.retrieve(st.session_state.openai_model)
+                        st.success('API Key 验证成功', icon='✅')
+                    except Exception as e:
+                        st.error(e, icon='❌')
+                    
 with st.spinner("正在加载模型..."):
     with open("fraud_keywords.json", "r", encoding="utf-8") as f:
         keywords = json.load(f)
@@ -135,28 +153,6 @@ def predict_text(text):
     except Exception as e:
         st.error(f"分析失败: {str(e)}")
         return None
-
-# ---------------------------
-# 侧边栏说明
-# ---------------------------
-with st.sidebar:
-    with st.expander("📌 操作说明"):
-        st.markdown(
-            """
-        1. 在文本框中输入待检测内容
-        2. 点击「开始检测」按钮
-        3. 查看下方分析结果
-        4. 使用下方工具进行深度分析
-        """
-        )
-
-    with st.expander("⚙️ 高级选项"):
-        confidence_threshold = st.slider(
-            "置信度阈值", min_value=0.7, max_value=0.99, value=0.9, step=0.01
-        )
-
-        analysis_depth = st.selectbox("分析深度", ["快速模式", "标准模式", "深度模式"])
-    
 
 
 # ---------------------------

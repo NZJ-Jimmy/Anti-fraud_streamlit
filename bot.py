@@ -64,7 +64,7 @@ st.markdown('<h1 class="main-title">🤖 反诈知识问答助手</h1>', unsafe_
 
 # Page Config
 with st.sidebar:
-    with st.expander("📌 操作说明"):
+    with st.expander("📌 操作说明", expanded=True):
         st.markdown(
         """
         1. **输入问题**：在下方输入框中输入你的问题，点击发送按钮。
@@ -72,67 +72,66 @@ with st.sidebar:
         3. **查看示例问题**：点击上方的示例问题按钮，快速获取常见问题的回答。
         """
         )
-    
-    with st.expander("配置 DeepSeek API Key"):
-        use_custom_openai = st.checkbox('自定义 DeepSeek 连接配置')
         
-        if use_custom_openai:
-            st.session_state.openai_api_key = st.text_input('OpenAI API Key', type='password')
-            st.session_state.openai_model = st.text_input('OpenAI Model')
-            st.session_state.openai_base_url = st.text_input('OpenAI Base URL')
-        else:
-            st.session_state.openai_api_key = st.secrets['OPENAI_API_KEY']
-            st.session_state.openai_model = st.secrets['OPENAI_MODEL']
-            st.session_state.openai_base_url = st.secrets['OPENAI_BASE_URL']
-        
-        if st.button('检查 API Key 可用性'):
-            import openai
-            with st.spinner('正在验证...'):
-                try:
-                    openai.base_url = st.session_state.openai_base_url
-                    openai.api_key = st.session_state.openai_api_key
-                    openai.models.retrieve(st.session_state.openai_model)
-                    st.success('API Key 验证成功', icon='✅')
-                except Exception as e:
-                    st.error(e, icon='❌')
-                    
-    with st.expander("连接 Neo4j 数据库"):
-        use_custom_neo4j = st.checkbox('自定义 Neo4j 连接配置')
-
-        if use_custom_neo4j:
-            st.session_state.neo4j_uri = st.text_input('Neo4j URL')
-            st.session_state.neo4j_username = st.text_input('Neo4j 用户名')
-            st.session_state.neo4j_database = st.text_input('Neo4j 数据库')
-            st.session_state.neo4j_password = st.text_input('Neo4j 密码', type='password')
-        else:
-            st.session_state.neo4j_uri = st.secrets['NEO4J_URI']
-            st.session_state.neo4j_username = st.secrets['NEO4J_USERNAME']
-            st.session_state.neo4j_database = st.secrets['NEO4J_DATABASE']
-            st.session_state.neo4j_password = st.secrets['NEO4J_PASSWORD']
-
-        if st.button('检查连接可用性'):
-            from neo4j import GraphDatabase
-            with st.spinner('正在连接...'):
-                try:
-                    with GraphDatabase.driver(
-                        uri=st.session_state.neo4j_uri, 
-                        auth=(st.session_state.neo4j_username, 
-                            st.session_state.neo4j_password),
-                        database=st.session_state.neo4j_database
-                        ) as driver:
-                            driver.verify_connectivity()
-                            st.success('连接成功', icon='✅')
-                except Exception as e:
-                    st.error(e, icon='❌')
-    
     if st.button('重置会话', icon='🔄'):
         st.session_state.messages = [
             {"role": "assistant", "content": "你好，我是关于反诈知识的问答助手。有什么可以帮助到你？🥰"},
         ]
         st.success('会话已重置', icon='✅')
-        
+    
+    with st.expander("⚙️ 高级选项"):
+        with st.expander("配置 DeepSeek API Key"):
+            use_custom_openai = st.checkbox('自定义 DeepSeek 连接配置')
+            
+            if use_custom_openai:
+                st.session_state.openai_api_key = st.text_input('OpenAI API Key', type='password')
+                st.session_state.openai_model = st.text_input('OpenAI Model')
+                st.session_state.openai_base_url = st.text_input('OpenAI Base URL')
+            else:
+                st.session_state.openai_api_key = st.secrets['OPENAI_API_KEY']
+                st.session_state.openai_model = st.secrets['OPENAI_MODEL']
+                st.session_state.openai_base_url = st.secrets['OPENAI_BASE_URL']
+            
+            if st.button('检查 API Key 可用性'):
+                import openai
+                with st.spinner('正在验证...'):
+                    try:
+                        openai.base_url = st.session_state.openai_base_url
+                        openai.api_key = st.session_state.openai_api_key
+                        openai.models.retrieve(st.session_state.openai_model)
+                        st.success('API Key 验证成功', icon='✅')
+                    except Exception as e:
+                        st.error(e, icon='❌')
+                        
+        with st.expander("连接 Neo4j 数据库"):
+            use_custom_neo4j = st.checkbox('自定义 Neo4j 连接配置')
 
+            if use_custom_neo4j:
+                st.session_state.neo4j_uri = st.text_input('Neo4j URL')
+                st.session_state.neo4j_username = st.text_input('Neo4j 用户名')
+                st.session_state.neo4j_database = st.text_input('Neo4j 数据库')
+                st.session_state.neo4j_password = st.text_input('Neo4j 密码', type='password')
+            else:
+                st.session_state.neo4j_uri = st.secrets['NEO4J_URI']
+                st.session_state.neo4j_username = st.secrets['NEO4J_USERNAME']
+                st.session_state.neo4j_database = st.secrets['NEO4J_DATABASE']
+                st.session_state.neo4j_password = st.secrets['NEO4J_PASSWORD']
 
+            if st.button('检查连接可用性'):
+                from neo4j import GraphDatabase
+                with st.spinner('正在连接...'):
+                    try:
+                        with GraphDatabase.driver(
+                            uri=st.session_state.neo4j_uri, 
+                            auth=(st.session_state.neo4j_username, 
+                                st.session_state.neo4j_password),
+                            database=st.session_state.neo4j_database
+                            ) as driver:
+                                driver.verify_connectivity()
+                                st.success('连接成功', icon='✅')
+                    except Exception as e:
+                        st.error(e, icon='❌')
+    
 # Set up Session State
 if "messages" not in st.session_state:
     st.session_state.messages = [
