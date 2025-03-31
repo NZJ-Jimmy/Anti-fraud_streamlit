@@ -133,7 +133,7 @@ if "messages" not in st.session_state:
 # Submit handler
 def handle_submit(message):
     # Handle the response
-    with st.spinner('Thinking...'):
+    with st.spinner('思考中……'):
         from agent import generate_response
         # Call the agent
         response = generate_response(message)
