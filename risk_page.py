@@ -57,6 +57,15 @@ st.markdown(
 )
 
 with st.sidebar:
+    with st.expander("📌 操作说明"):
+        st.markdown(
+        """
+        1. **⚠️ 风险评估系统**：根据用户填写的问卷信息，生成个性化的风险分析报告和建议。
+        2. **📝 风险分析报告**：总结用户的风险特征，并给出实用建议。
+        3. **📈 指标关联分析**：展示用户信息与风险值之间的关联热力图和路径分析图。
+        """
+        )
+        
     with st.expander("配置 DeepSeek API Key"):
         use_custom_openai = st.checkbox('自定义 DeepSeek 连接配置')
         
