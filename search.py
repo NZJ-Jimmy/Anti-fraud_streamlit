@@ -178,7 +178,7 @@ with st.sidebar:
         """
         )
     with st.expander("⚙️ 高级选项"):
-        with st.expander("连接 Neo4j 数据库"):
+            st.header("Neo4j 数据库连接配置")
             use_custom_neo4j = st.checkbox('自定义 Neo4j 连接配置')
 
             if use_custom_neo4j:

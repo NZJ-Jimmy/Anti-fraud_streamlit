@@ -80,7 +80,7 @@ with st.sidebar:
         st.success('会话已重置', icon='✅')
     
     with st.expander("⚙️ 高级选项"):
-        with st.expander("配置 DeepSeek API Key"):
+            st.header("DeepSeek API Key 配置")
             use_custom_openai = st.checkbox('自定义 DeepSeek 连接配置')
             
             if use_custom_openai:
@@ -103,7 +103,7 @@ with st.sidebar:
                     except Exception as e:
                         st.error(e, icon='❌')
                         
-        with st.expander("连接 Neo4j 数据库"):
+            st.header("Neo4j 数据库连接配置")
             use_custom_neo4j = st.checkbox('自定义 Neo4j 连接配置')
 
             if use_custom_neo4j:
