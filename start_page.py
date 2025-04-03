@@ -15,5 +15,5 @@ with st.sidebar:
 
 st.title(":rainbow[「智镜·无垠」]")
 st.markdown("### :rainbow[*基于知识图谱与 DeepSeek 的全维度反诈中枢*]")
-video_path = "logo.mp4"
+video_path = "assets/logo.mp4"
 st.video(video_path, autoplay=True, muted=True, loop=True)
