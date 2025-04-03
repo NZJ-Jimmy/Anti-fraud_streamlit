@@ -54,11 +54,21 @@ with st.sidebar:
                 except Exception as e:
                     st.error(e, icon='❌')
                     
-with st.spinner("正在加载模型..."):
+@st.cache_resource(show_spinner=False)
+def init_keywords():    
     with open("fraud_keywords.json", "r", encoding="utf-8") as f:
         keywords = json.load(f)
+    return keywords
+
+@st.cache_resource(show_spinner=False)
+def init_msg_cls():
+    import fraud_msg_cls
+    return fraud_msg_cls.MsgClsModel()
+
+with st.spinner("正在加载模型..."):
+    keywords = init_keywords()
     keywords = [keywords[i][0] for i in range(len(keywords))]
-    
+    model = init_msg_cls()
     import time
     import torch
     import jieba
@@ -111,7 +121,7 @@ def get_risk_level(res, prob):
 
 def predict_text(text):
     try:
-        predictions = fraud_msg_cls.predict(text)
+        predictions = model.predict(text)
         max_category, max_prob = predictions[0]
 
         # 特征计算函数
@@ -427,6 +437,40 @@ with button_col:
         st.balloons()
 
 
+@st.cache_resource(show_spinner=False)
+def draw_frq_fig():
+    try:
+        with open("fraud_keywords.json", "r", encoding="utf-8") as f:
+            words = json.load(f)
+
+            # 将词频数据转换为 DataFrame
+            word_freq_df = pd.DataFrame(words, columns=["Word", "Frequency"])
+
+            # 使用 plotly 生成更美观的直方图
+            fig = px.bar(
+                word_freq_df,
+                x="Word",
+                y="Frequency",
+                text="Frequency",
+                color="Frequency",
+                color_continuous_scale="Viridis",
+                labels={"Word": "关键词", "Frequency": "频率"}
+            )
+
+            # 设置图表样式
+            fig.update_traces(
+                texttemplate='%{text:.2s}', 
+                textposition='outside',
+                marker_line_color='rgb(8,48,107)',
+                marker_line_width=1.5
+            )
+            return fig
+            st.plotly_chart(fig, use_container_width=True)
+    except FileNotFoundError:
+        st.warning("词频文件未找到")
+    except Exception as e:
+        st.error(f"直方图加载失败: {str(e)}")
+
 if not st.session_state.get("show_result", False):
     with result_area.container():
         col1, col2 = st.columns([1, 1], gap="large")
@@ -451,36 +495,8 @@ if not st.session_state.get("show_result", False):
                 description="🔑 基于诈骗信息数据库的关键词提取",
                 color_name="gray-70",
             )
-            try:
-                with open("fraud_keywords.json", "r", encoding="utf-8") as f:
-                    words = json.load(f)
-
-                    # 将词频数据转换为 DataFrame
-                    word_freq_df = pd.DataFrame(words, columns=["Word", "Frequency"])
-
-                    # 使用 plotly 生成更美观的直方图
-                    fig = px.bar(
-                        word_freq_df,
-                        x="Word",
-                        y="Frequency",
-                        text="Frequency",
-                        color="Frequency",
-                        color_continuous_scale="Viridis",
-                        labels={"Word": "关键词", "Frequency": "频率"}
-                    )
-
-                    # 设置图表样式
-                    fig.update_traces(
-                        texttemplate='%{text:.2s}', 
-                        textposition='outside',
-                        marker_line_color='rgb(8,48,107)',
-                        marker_line_width=1.5
-                    )
-                    st.plotly_chart(fig, use_container_width=True)
-            except FileNotFoundError:
-                st.warning("词频文件未找到")
-            except Exception as e:
-                st.error(f"直方图加载失败: {str(e)}")
+            fig = draw_frq_fig()
+            st.plotly_chart(fig, use_container_width=True)
 # ---------------------------
 # 底部信息
 # ---------------------------

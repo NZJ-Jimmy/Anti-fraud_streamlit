@@ -7,6 +7,18 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+st.markdown("""
+    <style>
+        .reportview-container {
+            margin-top: -2em;
+        }
+        #MainMenu {visibility: hidden;}
+        .stDeployButton {display:none;}
+        footer {visibility: hidden;}
+        #stDecoration {display:none;}
+    </style>
+""", unsafe_allow_html=True)
+
 st.session_state.neo4j_uri = st.secrets['NEO4J_URI']
 st.session_state.neo4j_username = st.secrets['NEO4J_USERNAME']
 st.session_state.neo4j_database = st.secrets['NEO4J_DATABASE']
