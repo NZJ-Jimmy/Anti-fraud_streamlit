@@ -141,11 +141,16 @@ if "messages" not in st.session_state:
 # Submit handler
 def handle_submit(message):
     # Handle the response
-    with st.spinner('DeepSeek 思考中，请耐心等待……'):
-        from agent import generate_response
+    # with st.spinner('DeepSeek 思考中，请耐心等待……'):
+        # from agent import generate_response
         # Call the agent
-        response = generate_response(message)
-        write_message('assistant', response)
+        # response = generate_response(message)
+        # write_message('assistant', response)
+        from agent import generate_response_stream
+        response_stream = generate_response_stream(message)
+        write_message('assistant', response_stream)
+            
+        
 
 # 在聊天界面顶部添加示例问题按钮
 st.write("试试这些常见问题：")

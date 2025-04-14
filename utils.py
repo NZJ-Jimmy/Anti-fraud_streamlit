@@ -8,12 +8,20 @@ def write_message(role, content, save = True):
      session state and then writes a message to the UI
     """
     # Append to session state
-    if save:
-        st.session_state.messages.append({"role": role, "content": content})
+
 
     # Write to UI
     with st.chat_message(role):
-        st.markdown(content)
+        if type(content) == str:
+            result = content
+        else:
+            with st.spinner("正在生成内容……"):
+                with st.expander("思考链", expanded=False):
+                    result = st.write_stream(content)
+                    result = result[-1]["output"]
+        st.markdown(result)
+        if save:
+            st.session_state.messages.append({"role": role, "content": result})
 # end::write_message[]
 
 # tag::get_session_id[]

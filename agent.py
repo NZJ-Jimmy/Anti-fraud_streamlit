@@ -131,3 +131,15 @@ def generate_response(user_input):
         {"configurable": {"session_id": get_session_id()}},)
 
     return response['output']
+
+def generate_response_stream(user_input):
+    """
+    Create a handler that calls the Conversational agent
+    and returns a response to be rendered in the UI
+    """
+
+    response = chat_agent.stream(
+        {"input": user_input},
+        {"configurable": {"session_id": get_session_id()}},)
+
+    return response
