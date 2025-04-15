@@ -11,7 +11,7 @@ pyvis==0.3.2
 pandas==2.2.3
 filelock==3.18.0
 streamlit_extras==0.6.0
-torch==2.6.0
+torch==2.5
 jieba==0.42.1
 scikit-learn==1.6.1
 transformers==4.50.2

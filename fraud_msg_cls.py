@@ -26,7 +26,7 @@ class MsgClsModel:
             with open("model/final_model.pth", "wb") as f:
                 f.write(response.content)
         # Use Huawei Nezha model
-        self.model.load_state_dict(torch.load(r"model/final_model.pth", map_location=device, weights_only=False))
+        self.model.load_state_dict(torch.load(r"model/final_model.pth", map_location=device))
         if torch.cuda.is_available():
             self.model = model.cuda()
     
