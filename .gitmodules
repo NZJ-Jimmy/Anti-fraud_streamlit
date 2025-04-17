@@ -1,6 +1,0 @@
-[submodule "Anti-fruad_KG_Construct"]
-	path = Anti-fruad_KG_Construct
-	url = .\\Anti-fruad_KG_Construct\\
-[submodule "Fraud-msg_Classification"]
-	path = Fraud-msg_Classification
-	url = .\\Fraud-msg_Classification\\
