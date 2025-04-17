@@ -8,7 +8,7 @@ import pandas as pd
 import plotly.express as px
 
 # 配置文件路径
-DATA_FILE = "articles.json"
+DATA_FILE = "show/articles.json"
 LOCK_FILE = DATA_FILE + ".lock"
 
 

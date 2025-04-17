@@ -56,23 +56,20 @@ with st.sidebar:
                     
 @st.cache_resource(show_spinner=False)
 def init_keywords():    
-    with open("fraud_keywords.json", "r", encoding="utf-8") as f:
+    with open("recognize/fraud_keywords.json", "r", encoding="utf-8") as f:
         keywords = json.load(f)
     return keywords
 
 @st.cache_resource(show_spinner=False)
 def init_msg_cls():
-    import fraud_msg_cls
+    from recognize import fraud_msg_cls
     return fraud_msg_cls.MsgClsModel()
 
 with st.spinner("正在加载模型..."):
     keywords = init_keywords()
     keywords = [keywords[i][0] for i in range(len(keywords))]
     model = init_msg_cls()
-    import time
-    import torch
     import jieba
-    import fraud_msg_cls
 
 # ---------------------------
 # 页面配置
@@ -440,7 +437,7 @@ with button_col:
 @st.cache_resource(show_spinner=False)
 def draw_frq_fig():
     try:
-        with open("fraud_keywords.json", "r", encoding="utf-8") as f:
+        with open("recognize/fraud_keywords.json", "r", encoding="utf-8") as f:
             words = json.load(f)
 
             # 将词频数据转换为 DataFrame
@@ -481,7 +478,7 @@ if not st.session_state.get("show_result", False):
                 color_name="gray-70",
             )
             try:
-                with open("wordcloud.html", "r", encoding="utf-8") as f:
+                with open("recognize/wordcloud.html", "r", encoding="utf-8") as f:
                     html_content = f.read()
                 st.components.v1.html(html_content, height=800)
             except FileNotFoundError:

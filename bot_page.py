@@ -1,5 +1,5 @@
 import streamlit as st
-from utils import write_message
+from bot.utils import write_message
 
 # 示例问题列表
 EXAMPLE_QUESTIONS = [
@@ -146,7 +146,7 @@ def handle_submit(message):
         # Call the agent
         # response = generate_response(message)
         # write_message('assistant', response)
-        from agent import generate_response_stream
+        from bot.agent import generate_response_stream
         response_stream = generate_response_stream(message)
         write_message('assistant', response_stream)
             

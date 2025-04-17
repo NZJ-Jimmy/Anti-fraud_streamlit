@@ -1,5 +1,5 @@
-from llm import llm
-from graph import graph
+from .llm import llm
+from .graph import graph
 
 # Create a anti-fraud chat chain
 from langchain_core.prompts import ChatPromptTemplate
@@ -17,7 +17,7 @@ antiFraud_chat = chat_prompt | llm | StrOutputParser()
 # Create a set of tools
 from langchain.tools import Tool
 # from tools.vector import get_movie_plot
-from tools.cypher import cypher_qa
+from .tools.cypher import cypher_qa
 
 tools = [
     Tool.from_function(
@@ -118,7 +118,7 @@ chat_agent = RunnableWithMessageHistory(
 )
 
 # Create a handler to call the agent
-from utils import get_session_id
+from .utils import get_session_id
 
 def generate_response(user_input):
     """

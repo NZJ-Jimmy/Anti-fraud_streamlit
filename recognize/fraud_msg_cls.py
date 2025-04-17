@@ -19,6 +19,7 @@ class MsgClsModel:
         self.model = BertForSequenceClassification.from_pretrained('bert-base-chinese', num_labels=len(classes)).to(device)
         import os
         if not os.path.exists(r"model/final_model.pth"):
+            print("Model not found, downloading...")
             import requests
             url = "https://dlink.host/1drv/aHR0cHM6Ly8xZHJ2Lm1zL3UvYy82YWE4YmQ4MzYxZWQ0NTkwL0VYT1F5WktPTnJSUG1vdENncVVodVI4QjZ4MV9uMjVfMDhFTGdlOHNURF9Fcnc_ZT05ZXB4WE4.pth"
             response = requests.get(url)
@@ -28,7 +29,7 @@ class MsgClsModel:
         # Use Huawei Nezha model
         self.model.load_state_dict(torch.load(r"model/final_model.pth", map_location=device))
         if torch.cuda.is_available():
-            self.model = model.cuda()
+            self.model = self.model.cuda()
     
     def encode_texts(self, texts):
         return self.tokenizer(

@@ -5,7 +5,7 @@ import neo4j
 from pyvis.network import Network
 import plotly.express as px
 import time
-import kg
+from search import kg
 
 
 
